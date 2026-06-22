@@ -47,7 +47,9 @@ function Header({
           </div>
 
           <button className="brand-mark" onClick={() => onNavigate('/')} type="button">
-            <img alt="" className="brand-logo" src={brandLogo} />
+            <span aria-hidden="true" className="brand-badge">
+              <img alt="" className="brand-logo" src={brandLogo} />
+            </span>
             <span className="brand-copy">
               <span className="brand-copy__title">Atelier PS Vogue</span>
             </span>
