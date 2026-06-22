@@ -1,5 +1,11 @@
 export function getCurrentPath() {
-  return window.location.pathname || '/';
+  const path = window.location.pathname || '/';
+  const repoPrefix = '/shopping-app';
+  if (path.startsWith(repoPrefix)) {
+    const subPath = path.slice(repoPrefix.length);
+    return subPath || '/';
+  }
+  return path;
 }
 
 export function formatCurrency(value) {

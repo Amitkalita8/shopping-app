@@ -67,7 +67,10 @@ function StorefrontApp() {
 
   const navigate = (path) => {
     if (path !== currentPath) {
-      window.history.pushState({}, '', path);
+      const fullPath = window.location.pathname.startsWith('/shopping-app')
+        ? `/shopping-app${path}`
+        : path;
+      window.history.pushState({}, '', fullPath);
       setCurrentPath(path);
     }
 
