@@ -72,6 +72,7 @@ function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
             ))}
           </div>
         </section>
+        
       ))}
     </main>
   );
