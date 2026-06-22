@@ -1,0 +1,28 @@
+{
+  "files": {
+    "main.css": "/shopping-app/static/css/main.7f8c7306.css",
+    "main.js": "/shopping-app/static/js/main.8d174f0b.js",
+    "static/js/453.d6f92c07.chunk.js": "/shopping-app/static/js/453.d6f92c07.chunk.js",
+    "static/media/temple-jewelry-real.png": "/shopping-app/static/media/temple-jewelry-real.7830cdb95ac100ca7656.png",
+    "static/media/banarasi-saree-real.png": "/shopping-app/static/media/banarasi-saree-real.939a0fc495d9ee6968b2.png",
+    "static/media/potli-bag-real.png": "/shopping-app/static/media/potli-bag-real.a0d1bc7203e083efa7a8.png",
+    "static/media/tissue-saree-real.png": "/shopping-app/static/media/tissue-saree-real.4d9e2547b3ff02a99ffb.png",
+    "static/media/mekhela-sador-real.png": "/shopping-app/static/media/mekhela-sador-real.8ab42a0ea52e2eefd8c3.png",
+    "static/media/mens-shirt-real.png": "/shopping-app/static/media/mens-shirt-real.62aea082f8a645509866.png",
+    "static/media/women-tshirt-real.png": "/shopping-app/static/media/women-tshirt-real.f14217b69f54717c1dcd.png",
+    "static/media/kurti-set-real.png": "/shopping-app/static/media/kurti-set-real.aa22f03b6648e73973e5.png",
+    "static/media/mens-tshirt-real.png": "/shopping-app/static/media/mens-tshirt-real.83f81176bb4b62a131ec.png",
+    "static/media/women-top-real.png": "/shopping-app/static/media/women-top-real.1d8b2128941f7325f001.png",
+    "static/media/single-kurti-real.png": "/shopping-app/static/media/single-kurti-real.8fc16aa44f652c1e439a.png",
+    "static/media/women-bottoms-real.png": "/shopping-app/static/media/women-bottoms-real.e015add992c730edf1d7.png",
+    "static/media/Logo.jpeg": "/shopping-app/static/media/Logo.d0dbb30e73afa90f4df0.jpeg",
+    "index.html": "/shopping-app/index.html",
+    "main.7f8c7306.css.map": "/shopping-app/static/css/main.7f8c7306.css.map",
+    "main.8d174f0b.js.map": "/shopping-app/static/js/main.8d174f0b.js.map",
+    "453.d6f92c07.chunk.js.map": "/shopping-app/static/js/453.d6f92c07.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.7f8c7306.css",
+    "static/js/main.8d174f0b.js"
+  ]
+}
