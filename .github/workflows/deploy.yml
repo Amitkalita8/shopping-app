@@ -30,6 +30,7 @@ jobs:
       - name: Build project
         run: |
           cd frontend
+          export PUBLIC_URL=/shopping-app
           npm run build
 
       - name: Deploy to GitHub Pages

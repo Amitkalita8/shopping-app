@@ -4,7 +4,7 @@ import Header from './components/Header';
 import SidebarMenu from './components/SidebarMenu';
 import { getRoute } from './routes';
 import { getProductPath, products, sidebarSections } from './storeData';
-import { getCartCount, getCurrentPath } from './utils';
+import { getCartCount, getCurrentPath, toBrowserPath } from './utils';
 import './Landing.css';
 
 function StorefrontApp() {
@@ -67,10 +67,7 @@ function StorefrontApp() {
 
   const navigate = (path) => {
     if (path !== currentPath) {
-      const fullPath = window.location.pathname.startsWith('/shopping-app')
-        ? `/shopping-app${path}`
-        : path;
-      window.history.pushState({}, '', fullPath);
+      window.history.pushState({}, '', toBrowserPath(path));
       setCurrentPath(path);
     }
 
