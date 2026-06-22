@@ -1,0 +1,6 @@
+bin/
+coverage.out
+.appdata/
+.gocache/
+.gopath/
+server.exe
