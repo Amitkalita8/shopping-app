@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/static/css/main.9390c699.css",
+    "main.js": "/static/js/main.a42ad668.js",
+    "static/js/317.c8dd56d2.chunk.js": "/static/js/317.c8dd56d2.chunk.js",
+    "static/media/banarasi-saree-real.png": "/static/media/banarasi-saree-real.939a0fc495d9ee6968b2.png",
+    "static/media/Logo.jpeg": "/static/media/Logo.d0dbb30e73afa90f4df0.jpeg",
+    "index.html": "/index.html",
+    "main.9390c699.css.map": "/static/css/main.9390c699.css.map",
+    "main.a42ad668.js.map": "/static/js/main.a42ad668.js.map",
+    "317.c8dd56d2.chunk.js.map": "/static/js/317.c8dd56d2.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9390c699.css",
+    "static/js/main.a42ad668.js"
+  ]
+}
