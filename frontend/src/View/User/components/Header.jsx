@@ -1,5 +1,5 @@
 import brandLogo from '../Assets/Logo.jpeg';
-import { announcementCopy, navigationLinks } from '../storeData';
+import { navigationLinks } from '../storeData';
 
 function Header({
   cartCount,
