@@ -12,7 +12,7 @@ function Header({
 }) {
   return (
     <header className="site-header">
-      <div className="announcement-bar">{announcementCopy}</div>
+      {/* <div className="announcement-bar">{announcementCopy}</div> */}
 
       <div className="header-main">
         <div className="site-shell header-main__inner">
