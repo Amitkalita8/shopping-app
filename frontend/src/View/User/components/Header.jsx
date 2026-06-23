@@ -8,6 +8,7 @@ function Header({
   onMenuToggle,
   onNavigate,
   onOpenCart,
+  
   onSearchSubmit,
 }) {
   return (
