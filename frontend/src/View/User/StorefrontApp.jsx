@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import AuthModal from './components/AuthModal';
 import CartDrawer from './components/CartDrawer';
 import Header from './components/Header';
 import SidebarMenu from './components/SidebarMenu';
@@ -13,6 +14,7 @@ function StorefrontApp() {
   const [expandedSection, setExpandedSection] = useState(sidebarSections[0].id);
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [activeCartItemId, setActiveCartItemId] = useState(products[0].id);
 
   const activeRoute = getRoute(currentPath);
@@ -26,6 +28,7 @@ function StorefrontApp() {
       if (event.key === 'Escape') {
         setIsMenuOpen(false);
         setIsCartOpen(false);
+        setIsAuthOpen(false);
       }
     };
 
@@ -39,12 +42,12 @@ function StorefrontApp() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isMenuOpen || isCartOpen ? 'hidden' : '';
+    document.body.style.overflow = isMenuOpen || isCartOpen || isAuthOpen ? 'hidden' : '';
 
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isCartOpen, isMenuOpen]);
+  }, [isAuthOpen, isCartOpen, isMenuOpen]);
 
   useEffect(() => {
     if (cartItems.length === 0) {
@@ -121,6 +124,7 @@ function StorefrontApp() {
         isMenuOpen={isMenuOpen}
         onMenuToggle={() => setIsMenuOpen((current) => !current)}
         onNavigate={navigate}
+        onOpenAuth={() => setIsAuthOpen(true)}
         onOpenCart={() => {
           if (cartItems.length > 0) {
             setIsCartOpen(true);
@@ -137,6 +141,10 @@ function StorefrontApp() {
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onNavigate={navigate}
+        onOpenAuth={() => {
+          setIsMenuOpen(false);
+          setIsAuthOpen(true);
+        }}
         onToggleSection={(sectionId) =>
           setExpandedSection((current) => (current === sectionId ? null : sectionId))
         }
@@ -151,6 +159,8 @@ function StorefrontApp() {
         onQuantityChange={handleQuantityChange}
         onRemove={handleRemoveFromCart}
       />
+
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
       <ActivePage
         cartItems={cartItems}

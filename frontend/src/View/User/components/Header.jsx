@@ -7,8 +7,8 @@ function Header({
   isMenuOpen,
   onMenuToggle,
   onNavigate,
+  onOpenAuth,
   onOpenCart,
-  
   onSearchSubmit,
 }) {
   return (
@@ -55,6 +55,9 @@ function Header({
           </button>
 
           <div className="header-utilities">
+            <button aria-label="Login or register" className="header-utility" onClick={onOpenAuth} type="button">
+              <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--user" />
+            </button>
             <button aria-label="Offers" className="header-utility" type="button">
               <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--flash" />
             </button>

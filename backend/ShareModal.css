@@ -1,0 +1,504 @@
+/* Base styles (mobile-first) */
+.modal {
+  background-color: var(--clr-white);
+  padding: 6vw;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  font-family: var(--font-family-primary);
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease-in-out;
+  margin: 5vh auto;
+}
+.ShareLink{
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+.CopyButton{
+  flex-shrink: 0;
+}
+
+/* Heading */
+.modal h2 {
+  margin-top: 0;
+  font-size: 6vw;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Label */
+.modal label {
+  display: block;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Select field */
+.modal select {
+  width: 100%;
+  padding: 10px;
+  font-size: 4.5vw;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  transition: border 0.3s;
+}
+
+/* On select focus */
+.modal select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Button */
+.modal button {
+  padding: 10px 20px;
+  margin-top: 15px;
+  margin-right: 0;
+  margin-left: 0;
+  font-family: var(--font-family-primary);
+  font-size: 4.5vw;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--clr-button);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Button hover effect */
+.modal button:hover {
+  background-color: #26569acc;
+}
+
+.modal button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Text input */
+.modal input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 4.5vw;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f3f3f3;
+}
+
+/* Paragraphs */
+.modal p {
+  margin: 10px 0 5px;
+  font-weight: 500;
+  color: #444;
+}
+
+.shareModalHint {
+  font-size: 14px;
+  font-weight: 400;
+  color: #666;
+}
+
+.shareModalStatus {
+  margin-top: 16px;
+  color: #1e6b41;
+}
+
+.shareModalError {
+  margin-top: 12px;
+  color: #b42318;
+}
+
+.shareModalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.secondaryButton {
+  background-color: #6c757d;
+}
+
+.secondaryButton:hover {
+  background-color: #5b636a;
+}
+
+.modal a {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--clr-button);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.modal a:hover {
+  text-decoration: underline;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Extra small devices (max-width: 360px) */
+@media (max-width: 360px) {
+  .modal {
+    padding: 8vw;
+    margin: 5vh auto;
+  }
+
+  .modal h2 {
+    font-size: 7vw;
+  }
+
+  .modal select,
+  .modal button,
+  .modal input[type="text"] {
+    font-size: 5vw;
+  }
+
+  .modal button {
+    margin-right: 0;
+    padding: 8px 15px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 599px) {
+  .modal {
+    padding: 8vw;
+    margin: 5vh auto;
+  }
+
+  .modal h2 {
+    font-size: 7vw;
+  }
+
+  .modal select,
+  .modal button,
+  .modal input[type="text"] {
+    font-size: 5vw;
+  }
+
+  .modal button {
+    margin-right: 0;
+    padding: 8px 15px;
+  }
+}
+
+/* Tablet (min 600px) */
+@media (min-width: 600px) {
+  .modal {
+    padding: 30px 40px;
+    margin: 8vh auto;
+  }
+
+  .modal h2 {
+    font-size: 22px;
+  }
+
+  .modal select,
+  .modal button,
+  .modal input[type="text"] {
+    font-size: 16px;
+  }
+}
+
+/* Laptop/Desktop (min 1024px) */
+@media (min-width: 1024px) {
+  .modal {
+    padding: 30px 40px;
+    max-width: 500px;
+    margin: 10vh auto;
+  }
+
+  .modal h2 {
+    font-size: 24px;
+  }
+}
+
+@keyframes shareModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.shareModal {
+  width: min(560px, calc(100vw - 32px));
+  background: var(--clr-white);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(8, 28, 59, 0.18);
+  padding: 28px;
+  box-sizing: border-box;
+  font-family: var(--font-family-primary);
+  animation: shareModalFadeIn 0.24s ease-out;
+  border: 1px solid rgba(52, 110, 235, 0.08);
+}
+
+.shareModalHeader {
+  margin-bottom: 22px;
+}
+
+.shareModalHeader h2 {
+  margin: 0;
+  color: var(--font-color-highlighted);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.shareModalSubtitle {
+  margin: 10px 0 0;
+  color: var(--font-color-primary);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.shareModalSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shareModalEmailInput {
+  width: 100%;
+  height: 58px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(8, 28, 59, 0.12);
+  background: #f8fbff;
+  color: var(--font-color-highlighted);
+  font-size: 16px;
+  font-family: var(--font-family-primary);
+  box-sizing: border-box;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.shareModalEmailInput:focus {
+  outline: none;
+  border-color: rgba(52, 110, 235, 0.45);
+  box-shadow: 0 0 0 4px rgba(52, 110, 235, 0.1);
+  background: #fff;
+}
+
+.shareModalEmailInput::placeholder {
+  color: var(--font-color-primary);
+}
+
+.shareModalLabel {
+  color: var(--font-color-highlighted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.shareModalMetaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shareModalHint {
+  margin: 0;
+  color: var(--font-color-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.shareModalCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(52, 110, 235, 0.1);
+  color: var(--clr-button);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shareModalMessage {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.shareModalMessageSuccess {
+  background: rgba(30, 107, 65, 0.1);
+  color: #16603b;
+  border: 1px solid rgba(30, 107, 65, 0.12);
+}
+
+.shareModalMessageError {
+  background: rgba(180, 35, 24, 0.08);
+  color: #9f2318;
+  border: 1px solid rgba(180, 35, 24, 0.12);
+}
+
+.shareModalLinkSection {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(8, 28, 59, 0.08);
+}
+
+.shareModalLinkRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shareModalLinkInput {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(8, 28, 59, 0.12);
+  background: #f8fbff;
+  color: var(--font-color-highlighted);
+  font-size: 15px;
+  font-family: var(--font-family-primary);
+  box-sizing: border-box;
+}
+
+.shareModalCopyButton,
+.shareModalPrimaryButton,
+.shareModalSecondaryButton {
+  appearance: none;
+  border: none;
+  border-radius: 16px;
+  font-family: var(--font-family-primary);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.shareModalCopyButton:hover,
+.shareModalPrimaryButton:hover,
+.shareModalSecondaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.shareModalCopyButton:disabled,
+.shareModalPrimaryButton:disabled,
+.shareModalSecondaryButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.shareModalCopyButton {
+  height: 52px;
+  min-width: 98px;
+  padding: 0 20px;
+  background: var(--clr-button);
+  color: var(--font-color-white);
+  box-shadow: 0 10px 20px rgba(52, 110, 235, 0.22);
+}
+
+.shareModalCopyButton:hover,
+.shareModalPrimaryButton:hover {
+  background: var(--clr-button);
+}
+
+.shareModalOpenLink {
+  display: inline-flex;
+  margin-top: 10px;
+  color: var(--clr-button);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.shareModalOpenLink:hover {
+  text-decoration: underline;
+}
+
+.shareModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.shareModalPrimaryButton {
+  min-height: 52px;
+  padding: 0 22px;
+  background: var(--clr-button);
+  color: var(--font-color-white);
+  box-shadow: 0 10px 20px rgba(52, 110, 235, 0.22);
+}
+
+.shareModalSecondaryButton {
+  min-height: 52px;
+  padding: 0 22px;
+  background: rgba(52, 110, 235, 0.09);
+  color: var(--clr-button);
+}
+
+.shareModalSecondaryButton:hover {
+  background: rgba(52, 110, 235, 0.16);
+}
+
+@media (max-width: 640px) {
+  .shareModal {
+    width: min(100vw - 24px, 560px);
+    padding: 22px 18px 18px;
+    border-radius: 20px;
+  }
+
+  .shareModalHeader h2 {
+    font-size: 28px;
+  }
+
+  .shareModalSubtitle {
+    font-size: 14px;
+  }
+
+  .shareModalLinkRow,
+  .shareModalActions {
+    flex-direction: column;
+  }
+
+  .shareModalCopyButton,
+  .shareModalPrimaryButton,
+  .shareModalSecondaryButton {
+    width: 100%;
+  }
+}

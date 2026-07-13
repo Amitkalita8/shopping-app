@@ -1,6 +1,13 @@
 import { sidebarSections } from '../storeData';
 
-function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate, onToggleSection }) {
+function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate, onOpenAuth, onToggleSection }) {
+  const socialLinks = [
+    { id: 'instagram', label: 'Instagram', shortLabel: 'ig' },
+    { id: 'facebook', label: 'Facebook', shortLabel: 'fb' },
+    { id: 'pinterest', label: 'Pinterest', shortLabel: 'pi' },
+    { id: 'youtube', label: 'YouTube', shortLabel: 'yt' },
+  ];
+
   return (
     <>
       <button
@@ -13,7 +20,7 @@ function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate
       <aside className={`sidebar-drawer ${isOpen ? 'is-open' : ''}`} id="shop-menu">
         <div className="sidebar-drawer__top">
           <button aria-label="Close shop menu" className="sidebar-close" onClick={onClose} type="button">
-            x
+            <span aria-hidden="true" className="sidebar-close__icon" />
           </button>
         </div>
 
@@ -35,9 +42,10 @@ function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate
                       type="button"
                     >
                       <span>{section.label}</span>
-                      <span aria-hidden="true" className="sidebar-section__chevron">
-                        {isExpanded ? 'v' : '>'}
-                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`sidebar-section__chevron ${isExpanded ? 'is-expanded' : ''}`}
+                      />
                     </button>
 
                     {isExpanded ? (
@@ -50,7 +58,7 @@ function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate
                             type="button"
                           >
                             <span>{item.label}</span>
-                            <span aria-hidden="true">></span>
+                            <span aria-hidden="true" className="sidebar-submenu__chevron" />
                           </button>
                         ))}
                       </div>
@@ -71,15 +79,19 @@ function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate
         </div>
 
         <div className="sidebar-footer">
-          <button className="sidebar-login" type="button">
-            Log in
+          <button className="sidebar-login" onClick={onOpenAuth} type="button">
+            <span aria-hidden="true" className="sidebar-login__icon header-utility__glyph header-utility__glyph--user" />
+            <span>Log in</span>
+            <span aria-hidden="true" className="sidebar-login__chevron" />
           </button>
           <div className="sidebar-socials" aria-label="Social links">
-            <span>tw</span>
-            <span>fb</span>
-            <span>pi</span>
-            <span>ig</span>
-            <span>yt</span>
+            {socialLinks.map((link) => (
+              <button aria-label={link.label} className="sidebar-social" key={link.id} type="button">
+                <span aria-hidden="true" className={`sidebar-social__glyph sidebar-social__glyph--${link.id}`}>
+                  {link.shortLabel}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </aside>

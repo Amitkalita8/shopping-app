@@ -5,6 +5,120 @@ import {
 } from '../../storeData';
 import { formatCurrency } from '../../utils';
 
+const policyContent = {
+  returns: {
+    title: 'Return & Exchange Policy',
+    sections: [
+      {
+        heading: 'Returns & Exchanges',
+        items: [
+          'Products can be returned or exchanged within 7 days of delivery.',
+          'Items must be unused, unwashed, undamaged, and in their original packaging with all tags attached.',
+          'A valid order number or proof of purchase is required.',
+        ],
+      },
+      {
+        heading: 'Non-Returnable Items',
+        items: [
+          'Used, washed, or damaged products.',
+          'Products without original tags or packaging.',
+          'Customized or personalized items.',
+          'Earrings and certain accessories due to hygiene reasons.',
+        ],
+      },
+      {
+        heading: 'Damaged or Wrong Products',
+        body:
+          'If you receive a damaged, defective, or incorrect product, please contact us within 48 hours of delivery with photographs of the item and packaging. We will arrange a replacement or refund after verification.',
+      },
+      {
+        heading: 'Refunds',
+        items: [
+          'Once the returned product is received and inspected, the refund will be processed.',
+          'Refunds will be credited to the original payment method within 7–10 business days.',
+          'Shipping charges, if any, are non-refundable unless the return is due to our error.',
+        ],
+      },
+      {
+        heading: 'Contact Us',
+        body:
+          'For return or exchange requests, please contact our customer support team with your order details.',
+      },
+    ],
+  },
+  terms: {
+    title: 'Terms & Conditions',
+    sections: [
+      {
+        body:
+          'Welcome to our website. By accessing or using this website, you agree to comply with and be bound by the following Terms & Conditions.',
+      },
+      {
+        heading: 'Account Registration',
+        items: [
+          'Users must provide accurate and complete information during registration.',
+          'Users are responsible for maintaining the confidentiality of their account credentials.',
+          'The company reserves the right to suspend or terminate accounts containing false or misleading information.',
+        ],
+      },
+      {
+        heading: 'Product Information',
+        items: [
+          'We strive to ensure that all product descriptions, specifications, and prices are accurate.',
+          'However, we reserve the right to modify product information, pricing, or availability without prior notice.',
+        ],
+      },
+      {
+        heading: 'Orders and Acceptance',
+        items: [
+          'Submission of an order does not guarantee acceptance.',
+          'The company reserves the right to reject or cancel any order at its discretion.',
+        ],
+      },
+      {
+        heading: 'Payments',
+        items: [
+          'All payments must be made through approved payment methods available on the website.',
+          'Orders will be processed only after successful payment confirmation, where applicable.',
+        ],
+      },
+      {
+        heading: 'Intellectual Property',
+        body:
+          'All content on this website, including text, images, logos, designs, and trademarks, is the property of the company and may not be copied, reproduced, or distributed without prior written permission.',
+      },
+      {
+        heading: 'User Conduct',
+        body:
+          'Users shall not engage in any activity that may harm, disrupt, or interfere with the website or its services. Any misuse, unauthorized access, or fraudulent activity may result in legal action.',
+      },
+      {
+        heading: 'Privacy',
+        body:
+          'Personal information collected through the website will be handled in accordance with our Privacy Policy.',
+      },
+      {
+        heading: 'Limitation of Liability',
+        body:
+          'The company shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use of this website or its services.',
+      },
+      {
+        heading: 'Changes to Terms',
+        body:
+          'The company reserves the right to update or modify these Terms & Conditions at any time without prior notice.',
+      },
+      {
+        heading: 'Governing Law',
+        body: 'These Terms & Conditions shall be governed by and interpreted in accordance with the laws of India.',
+      },
+      {
+        body:
+          'By registering on or using this website, you acknowledge that you have read, understood, and agreed to these Terms & Conditions.',
+      },
+    ],
+  },
+};
+
 function getProductCopy(product, collection) {
   if (collection.label === 'Accessories') {
     return {
@@ -49,6 +163,7 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('about');
+  const [activePolicy, setActivePolicy] = useState(null);
   const [isZoomVisible, setIsZoomVisible] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 24 });
 
@@ -56,6 +171,7 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
     setSelectedImageIndex(0);
     setQuantity(1);
     setActiveTab('about');
+    setActivePolicy(null);
     setIsZoomVisible(false);
     setZoomPosition({ x: 50, y: 24 });
   }, [product.id]);
@@ -87,6 +203,7 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
     { id: 'fabric', label: 'Fabric', content: copy.fabric },
     { id: 'shipping', label: 'Shipping', content: copy.shipping },
   ];
+  const selectedPolicy = activePolicy ? policyContent[activePolicy] : null;
 
   return (
     <main className="site-shell page-content">
@@ -224,6 +341,15 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
             <p>Prices mentioned are inclusive of all taxes and special offer handling.</p>
           </section>
 
+          <div className="product-detail__policy-actions">
+            <button onClick={() => setActivePolicy('returns')} type="button">
+              Return Policy
+            </button>
+            <button onClick={() => setActivePolicy('terms')} type="button">
+              Terms & Conditions
+            </button>
+          </div>
+
           <div className="product-detail__tabs">
             <div className="product-detail__tab-list" role="tablist">
               {tabs.map((tab) => (
@@ -243,6 +369,48 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
             <div className="product-detail__tab-panel">
               {tabs.find((tab) => tab.id === activeTab)?.content}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <button
+        aria-label="Close policy dialog"
+        className={`overlay-backdrop overlay-backdrop--modal ${selectedPolicy ? 'is-visible' : ''}`}
+        onClick={() => setActivePolicy(null)}
+        type="button"
+      />
+
+      <section
+        aria-hidden={!selectedPolicy}
+        aria-labelledby="policy-modal-title"
+        className={`policy-modal ${selectedPolicy ? 'is-open' : ''}`}
+        role="dialog"
+      >
+        <div className="policy-modal__panel">
+          <div className="policy-modal__header">
+            <div>
+              <p className="policy-modal__eyebrow">Policies</p>
+              <h2 id="policy-modal-title">{selectedPolicy?.title}</h2>
+            </div>
+            <button aria-label="Close policy dialog" className="policy-modal__close" onClick={() => setActivePolicy(null)} type="button">
+              x
+            </button>
+          </div>
+
+          <div className="policy-modal__content">
+            {selectedPolicy?.sections.map((section, index) => (
+              <section className="policy-modal__section" key={`${selectedPolicy.title}-${index}`}>
+                {section.heading ? <h3>{section.heading}</h3> : null}
+                {section.body ? <p>{section.body}</p> : null}
+                {section.items ? (
+                  <ul>
+                    {section.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ))}
           </div>
         </div>
       </section>
