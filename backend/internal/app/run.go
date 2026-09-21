@@ -23,7 +23,7 @@ func Run() error {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.NewRouter(logger),
+		Handler:           httpapi.NewRouter(logger, cfg),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

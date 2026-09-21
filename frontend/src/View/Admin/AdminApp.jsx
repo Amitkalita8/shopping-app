@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import './AdminApp.css';
-import { cloneAdminState, DEFAULT_ADMIN_STATE, STORAGE_KEY } from './defaultAdminState';
+import { cloneAdminState, DEFAULT_ADMIN_STATE } from './defaultAdminState';
 
 const sections = [
   { id: 'overview', label: 'Overview' },
@@ -13,31 +13,23 @@ const sections = [
   { id: 'settings', label: 'Settings' },
 ];
 
-function loadAdminState() {
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    return cloneAdminState();
-  }
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:8080';
 
-  try {
-    const parsed = JSON.parse(stored);
-    return {
-      ...cloneAdminState(),
-      ...parsed,
-      settings: { ...DEFAULT_ADMIN_STATE.settings, ...(parsed.settings ?? {}) },
-      content: {
-        ...DEFAULT_ADMIN_STATE.content,
-        ...(parsed.content ?? {}),
-        hero: {
-          ...DEFAULT_ADMIN_STATE.content.hero,
-          ...(parsed.content?.hero ?? {}),
-        },
+function normalizeAdminState(parsed) {
+  return {
+    ...cloneAdminState(),
+    ...parsed,
+    settings: { ...DEFAULT_ADMIN_STATE.settings, ...(parsed.settings ?? {}) },
+    content: {
+      ...DEFAULT_ADMIN_STATE.content,
+      ...(parsed.content ?? {}),
+      hero: {
+        ...DEFAULT_ADMIN_STATE.content.hero,
+        ...(parsed.content?.hero ?? {}),
       },
-      policies: { ...DEFAULT_ADMIN_STATE.policies, ...(parsed.policies ?? {}) },
-    };
-  } catch (error) {
-    return cloneAdminState();
-  }
+    },
+    policies: { ...DEFAULT_ADMIN_STATE.policies, ...(parsed.policies ?? {}) },
+  };
 }
 
 function formatMoney(value) {
@@ -69,21 +61,40 @@ function FormField({ label, children, full = false }) {
 }
 
 function AdminApp({ onNavigate }) {
-  const [adminState, setAdminState] = useState(loadAdminState);
+  const [adminState, setAdminState] = useState(cloneAdminState);
   const [activeSection, setActiveSection] = useState('overview');
-  const [selectedProductId, setSelectedProductId] = useState(() => loadAdminState().products[0]?.id ?? null);
-  const [selectedCollectionId, setSelectedCollectionId] = useState(() => loadAdminState().collections[0]?.id ?? null);
-  const [selectedOrderId, setSelectedOrderId] = useState(() => loadAdminState().orders[0]?.id ?? null);
-  const [selectedCustomerId, setSelectedCustomerId] = useState(() => loadAdminState().customers[0]?.id ?? null);
+  const [selectedProductId, setSelectedProductId] = useState(cloneAdminState().products[0]?.id ?? null);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(cloneAdminState().collections[0]?.id ?? null);
+  const [selectedOrderId, setSelectedOrderId] = useState(cloneAdminState().orders[0]?.id ?? null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState(cloneAdminState().customers[0]?.id ?? null);
   const [productSearch, setProductSearch] = useState('');
   const [flashMessage, setFlashMessage] = useState('');
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(adminState));
-  }, [adminState]);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     document.title = 'Admin | Atelier PS Vogue';
+
+    const loadAdmin = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/bootstrap`);
+        if (!response.ok) {
+          throw new Error(`Failed with ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const nextState = normalizeAdminState(payload);
+        setAdminState(nextState);
+        setSelectedProductId(nextState.products[0]?.id ?? null);
+        setSelectedCollectionId(nextState.collections[0]?.id ?? null);
+        setSelectedOrderId(nextState.orders[0]?.id ?? null);
+        setSelectedCustomerId(nextState.customers[0]?.id ?? null);
+        setFlashMessage('Admin data loaded from API.');
+      } catch (error) {
+        setFlashMessage('API unavailable. Using local defaults.');
+      }
+    };
+
+    loadAdmin();
   }, []);
 
   useEffect(() => {
@@ -123,6 +134,29 @@ function AdminApp({ onNavigate }) {
   }, [adminState.products, productSearch]);
 
   const showFlash = (message) => setFlashMessage(message);
+
+  const saveAll = async (successMessage = 'Changes saved.') => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/bootstrap`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(adminState),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed with ${response.status}`);
+      }
+
+      showFlash(successMessage);
+    } catch (error) {
+      showFlash('Failed to save to API.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const updateProduct = (field, value) => {
     setAdminState((current) => ({
@@ -239,20 +273,7 @@ function AdminApp({ onNavigate }) {
 
     const text = await file.text();
     const imported = JSON.parse(text);
-    const nextState = {
-      ...cloneAdminState(),
-      ...imported,
-      settings: { ...DEFAULT_ADMIN_STATE.settings, ...(imported.settings ?? {}) },
-      content: {
-        ...DEFAULT_ADMIN_STATE.content,
-        ...(imported.content ?? {}),
-        hero: {
-          ...DEFAULT_ADMIN_STATE.content.hero,
-          ...(imported.content?.hero ?? {}),
-        },
-      },
-      policies: { ...DEFAULT_ADMIN_STATE.policies, ...(imported.policies ?? {}) },
-    };
+      const nextState = normalizeAdminState(imported);
 
     setAdminState(nextState);
     setSelectedProductId(nextState.products[0]?.id ?? null);
@@ -310,9 +331,9 @@ function AdminApp({ onNavigate }) {
             </div>
 
             <div className="admin-actions">
-              <button className="admin-button admin-button--dark" onClick={() => showFlash('Changes saved.')} type="button">
-                Save All
-              </button>
+                <button className="admin-button admin-button--dark" disabled={isSaving} onClick={() => saveAll()} type="button">
+                {isSaving ? 'Saving...' : 'Save All'}
+                </button>
               <button className="admin-button" onClick={exportData} type="button">
                 Export JSON
               </button>
@@ -513,7 +534,7 @@ function AdminApp({ onNavigate }) {
                     </div>
 
                     <div className="admin-form__actions">
-                      <button className="admin-button admin-button--dark" onClick={() => showFlash('Product updated.')} type="button">
+                      <button className="admin-button admin-button--dark" onClick={() => saveAll('Product updated.')} type="button">
                         Save Product
                       </button>
                       <button
@@ -631,7 +652,7 @@ function AdminApp({ onNavigate }) {
                     </div>
 
                     <div className="admin-form__actions">
-                      <button className="admin-button admin-button--dark" onClick={() => showFlash('Collection updated.')} type="button">
+                      <button className="admin-button admin-button--dark" onClick={() => saveAll('Collection updated.')} type="button">
                         Save Collection
                       </button>
                       <button
@@ -758,7 +779,7 @@ function AdminApp({ onNavigate }) {
                     </div>
 
                     <div className="admin-form__actions">
-                      <button className="admin-button admin-button--dark" onClick={() => showFlash('Order updated.')} type="button">
+                      <button className="admin-button admin-button--dark" onClick={() => saveAll('Order updated.')} type="button">
                         Save Order
                       </button>
                       <button
@@ -879,7 +900,7 @@ function AdminApp({ onNavigate }) {
                     </div>
 
                     <div className="admin-form__actions">
-                      <button className="admin-button admin-button--dark" onClick={() => showFlash('Customer updated.')} type="button">
+                      <button className="admin-button admin-button--dark" onClick={() => saveAll('Customer updated.')} type="button">
                         Save Customer
                       </button>
                       <button
@@ -970,7 +991,7 @@ function AdminApp({ onNavigate }) {
                 </div>
 
                 <div className="admin-form__actions">
-                  <button className="admin-button admin-button--dark" onClick={() => showFlash('Storefront content updated.')} type="button">
+                  <button className="admin-button admin-button--dark" onClick={() => saveAll('Storefront content updated.')} type="button">
                     Save Content
                   </button>
                 </div>
@@ -1012,7 +1033,7 @@ function AdminApp({ onNavigate }) {
                 </FormField>
 
                 <div className="admin-form__actions">
-                  <button className="admin-button admin-button--dark" onClick={() => showFlash('Policies updated.')} type="button">
+                  <button className="admin-button admin-button--dark" onClick={() => saveAll('Policies updated.')} type="button">
                     Save Policies
                   </button>
                 </div>
@@ -1089,7 +1110,7 @@ function AdminApp({ onNavigate }) {
                 </div>
 
                 <div className="admin-form__actions">
-                  <button className="admin-button admin-button--dark" onClick={() => showFlash('Settings updated.')} type="button">
+                  <button className="admin-button admin-button--dark" onClick={() => saveAll('Settings updated.')} type="button">
                     Save Settings
                   </button>
                 </div>

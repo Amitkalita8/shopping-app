@@ -7,11 +7,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"shopping-app/backend/internal/config"
 )
 
 func TestNewRouterServesHealth(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router := NewRouter(logger)
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000"})
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -34,7 +36,7 @@ func TestNewRouterServesHealth(t *testing.T) {
 
 func TestNewRouterServesMenTShirts(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router := NewRouter(logger)
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/products/men/t-shirts", nil)
 	rec := httptest.NewRecorder()
@@ -57,7 +59,7 @@ func TestNewRouterServesMenTShirts(t *testing.T) {
 
 func TestMenTShirtsHandlerRejectsInvalidMethod(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router := NewRouter(logger)
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000"})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/products/men/t-shirts", nil)
 	rec := httptest.NewRecorder()
