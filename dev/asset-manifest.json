@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/shopping-app/dev/static/css/main.d27b4f1c.css",
-    "main.js": "/shopping-app/dev/static/js/main.1941d82e.js",
+    "main.js": "/shopping-app/dev/static/js/main.2203d2af.js",
     "static/js/453.d6f92c07.chunk.js": "/shopping-app/dev/static/js/453.d6f92c07.chunk.js",
     "static/media/temple-jewelry-real.png": "/shopping-app/dev/static/media/temple-jewelry-real.7830cdb95ac100ca7656.png",
     "static/media/banarasi-saree-real.png": "/shopping-app/dev/static/media/banarasi-saree-real.939a0fc495d9ee6968b2.png",
@@ -18,11 +18,11 @@
     "static/media/Logo.jpeg": "/shopping-app/dev/static/media/Logo.d0dbb30e73afa90f4df0.jpeg",
     "index.html": "/shopping-app/dev/index.html",
     "main.d27b4f1c.css.map": "/shopping-app/dev/static/css/main.d27b4f1c.css.map",
-    "main.1941d82e.js.map": "/shopping-app/dev/static/js/main.1941d82e.js.map",
+    "main.2203d2af.js.map": "/shopping-app/dev/static/js/main.2203d2af.js.map",
     "453.d6f92c07.chunk.js.map": "/shopping-app/dev/static/js/453.d6f92c07.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.d27b4f1c.css",
-    "static/js/main.1941d82e.js"
+    "static/js/main.2203d2af.js"
   ]
 }
