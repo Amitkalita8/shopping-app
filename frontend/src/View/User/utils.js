@@ -28,6 +28,11 @@ export function toBrowserPath(path) {
   return basePath ? `${basePath}${path}` : path;
 }
 
+export function getProductPath(product) {
+  const productId = typeof product === 'string' ? product : product.id;
+  return `/products/${productId}`;
+}
+
 export function formatCurrency(value) {
   return `Rs ${value.toLocaleString('en-IN')}`;
 }

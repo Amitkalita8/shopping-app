@@ -1,164 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  getProductCollection,
-  getProductGallery,
-} from '../../storeData';
+import { getProductGallery } from '../../productGallery';
+import { useStorefront } from '../../StorefrontData';
 import { formatCurrency } from '../../utils';
 
-const policyContent = {
-  returns: {
-    title: 'Return & Exchange Policy',
-    sections: [
-      {
-        heading: 'Returns & Exchanges',
-        items: [
-          'Products can be returned or exchanged within 7 days of delivery.',
-          'Items must be unused, unwashed, undamaged, and in their original packaging with all tags attached.',
-          'A valid order number or proof of purchase is required.',
-        ],
-      },
-      {
-        heading: 'Non-Returnable Items',
-        items: [
-          'Used, washed, or damaged products.',
-          'Products without original tags or packaging.',
-          'Customized or personalized items.',
-          'Earrings and certain accessories due to hygiene reasons.',
-        ],
-      },
-      {
-        heading: 'Damaged or Wrong Products',
-        body:
-          'If you receive a damaged, defective, or incorrect product, please contact us within 48 hours of delivery with photographs of the item and packaging. We will arrange a replacement or refund after verification.',
-      },
-      {
-        heading: 'Refunds',
-        items: [
-          'Once the returned product is received and inspected, the refund will be processed.',
-          'Refunds will be credited to the original payment method within 7–10 business days.',
-          'Shipping charges, if any, are non-refundable unless the return is due to our error.',
-        ],
-      },
-      {
-        heading: 'Contact Us',
-        body:
-          'For return or exchange requests, please contact our customer support team with your order details.',
-      },
-    ],
-  },
-  terms: {
-    title: 'Terms & Conditions',
-    sections: [
-      {
-        body:
-          'Welcome to our website. By accessing or using this website, you agree to comply with and be bound by the following Terms & Conditions.',
-      },
-      {
-        heading: 'Account Registration',
-        items: [
-          'Users must provide accurate and complete information during registration.',
-          'Users are responsible for maintaining the confidentiality of their account credentials.',
-          'The company reserves the right to suspend or terminate accounts containing false or misleading information.',
-        ],
-      },
-      {
-        heading: 'Product Information',
-        items: [
-          'We strive to ensure that all product descriptions, specifications, and prices are accurate.',
-          'However, we reserve the right to modify product information, pricing, or availability without prior notice.',
-        ],
-      },
-      {
-        heading: 'Orders and Acceptance',
-        items: [
-          'Submission of an order does not guarantee acceptance.',
-          'The company reserves the right to reject or cancel any order at its discretion.',
-        ],
-      },
-      {
-        heading: 'Payments',
-        items: [
-          'All payments must be made through approved payment methods available on the website.',
-          'Orders will be processed only after successful payment confirmation, where applicable.',
-        ],
-      },
-      {
-        heading: 'Intellectual Property',
-        body:
-          'All content on this website, including text, images, logos, designs, and trademarks, is the property of the company and may not be copied, reproduced, or distributed without prior written permission.',
-      },
-      {
-        heading: 'User Conduct',
-        body:
-          'Users shall not engage in any activity that may harm, disrupt, or interfere with the website or its services. Any misuse, unauthorized access, or fraudulent activity may result in legal action.',
-      },
-      {
-        heading: 'Privacy',
-        body:
-          'Personal information collected through the website will be handled in accordance with our Privacy Policy.',
-      },
-      {
-        heading: 'Limitation of Liability',
-        body:
-          'The company shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use of this website or its services.',
-      },
-      {
-        heading: 'Changes to Terms',
-        body:
-          'The company reserves the right to update or modify these Terms & Conditions at any time without prior notice.',
-      },
-      {
-        heading: 'Governing Law',
-        body: 'These Terms & Conditions shall be governed by and interpreted in accordance with the laws of India.',
-      },
-      {
-        body:
-          'By registering on or using this website, you acknowledge that you have read, understood, and agreed to these Terms & Conditions.',
-      },
-    ],
-  },
-};
-
-function getProductCopy(product, collection) {
-  if (collection.label === 'Accessories') {
-    return {
-      about: `${product.title} is a styling-ready accessory selected to pair easily with festive and occasion looks.`,
-      fabric: 'Crafted with decorative finishing, structured detailing, and a premium presentation suitable for event styling.',
-      shipping:
-        'Ships in 2-4 working days with careful packaging and easy return support across eligible pincodes.',
-    };
-  }
-
-  if (collection.label === "Men's collection") {
-    return {
-      about: `${product.title} is designed as an easy wardrobe staple with a clean silhouette and all-day comfort.`,
-      fabric: 'Soft-touch fabric with a comfortable drape, breathable feel, and everyday wear construction.',
-      shipping:
-        'Ships in 2-4 working days with prepaid offers, easy exchanges, and support for most serviceable pincodes.',
-    };
-  }
-
-  if (collection.label === 'Women Western') {
-    return {
-      about: `${product.title} is part of the women western edit, built for easy styling from daywear to dressier moments.`,
-      fabric: 'Selected for a polished finish, comfortable wear, and a shape that holds well through repeated use.',
-      shipping:
-        'Ships in 2-4 working days with reliable delivery updates and simple return support where available.',
-    };
-  }
-
-  return {
-    about: `${product.title} is part of the traditional edit, chosen for occasion-ready styling, strong visual detail, and elevated finishing.`,
-    fabric: 'Features a premium festive drape with decorative detailing and a blouse or matching styling component where applicable.',
-    shipping:
-      'Ships in 2-4 working days with secure packaging, free-shipping support on qualifying orders, and return assistance on eligible items.',
-  };
-}
-
 function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
-  const collection = useMemo(() => getProductCollection(product.id), [product.id]);
+  const { content, policies } = useStorefront();
+  const { collection } = product;
+  const { productPage } = content;
   const gallery = useMemo(() => getProductGallery(product), [product]);
-  const copy = useMemo(() => getProductCopy(product, collection), [collection, product]);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -199,11 +48,11 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
   };
 
   const tabs = [
-    { id: 'about', label: 'About', content: copy.about },
-    { id: 'fabric', label: 'Fabric', content: copy.fabric },
-    { id: 'shipping', label: 'Shipping', content: copy.shipping },
+    { id: 'about', label: 'About', content: product.about },
+    { id: 'fabric', label: 'Fabric', content: product.fabric },
+    { id: 'shipping', label: 'Shipping', content: product.shipping },
   ];
-  const selectedPolicy = activePolicy ? policyContent[activePolicy] : null;
+  const selectedPolicy = activePolicy ? policies[activePolicy] ?? null : null;
 
   return (
     <main className="site-shell page-content">
@@ -284,14 +133,12 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
             <mark>{product.badge}</mark>
           </div>
 
-          <p className="product-detail__shipping-note">
-            Inclusive of all taxes. Free shipping above Rs 1500.
-          </p>
+          <p className="product-detail__shipping-note">{productPage.shippingNote}</p>
 
           <ul className="product-detail__trust-list">
-            <li>Authentic and quality assured</li>
-            <li>100% money back guarantee on eligible orders</li>
-            <li>Free shipping and returns on qualifying products</li>
+            {productPage.trustPoints.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
           </ul>
 
           <div className="product-detail__quantity-row">
@@ -337,8 +184,8 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
           </div>
 
           <section className="product-detail__offer">
-            <strong>Also get extra instant Rs 200 off on prepaid orders.</strong>
-            <p>Prices mentioned are inclusive of all taxes and special offer handling.</p>
+            <strong>{productPage.offerTitle}</strong>
+            <p>{productPage.offerCopy}</p>
           </section>
 
           <div className="product-detail__policy-actions">

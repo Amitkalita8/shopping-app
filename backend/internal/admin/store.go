@@ -201,7 +201,7 @@ func (s *Store) SaveState(ctx context.Context, state State) error {
 	if err := upsertJSONSetting(ctx, tx, "navigation_json", state.Content.Navigation); err != nil {
 		return err
 	}
-	if err := upsertJSONSetting(ctx, tx, "collections_json", state.Collections); err != nil {
+	if err := s.saveCollections(ctx, tx, state.Collections); err != nil {
 		return err
 	}
 
@@ -296,7 +296,7 @@ func (s *Store) loadContent(ctx context.Context, state *State) error {
 	rows, err := s.pool.Query(ctx, `
 		SELECT setting_key, setting_value
 		FROM site_settings
-		WHERE setting_key IN ('hero_content_json', 'spotlight_cards_json', 'navigation_json', 'collections_json')
+		WHERE setting_key IN ('hero_content_json', 'spotlight_cards_json', 'navigation_json')
 	`)
 	if err != nil {
 		return fmt.Errorf("load content settings: %w", err)
@@ -316,8 +316,6 @@ func (s *Store) loadContent(ctx context.Context, state *State) error {
 			_ = json.Unmarshal([]byte(item.Value), &state.Content.SpotlightCards)
 		case "navigation_json":
 			_ = json.Unmarshal([]byte(item.Value), &state.Content.Navigation)
-		case "collections_json":
-			_ = json.Unmarshal([]byte(item.Value), &state.Collections)
 		}
 	}
 
@@ -354,16 +352,12 @@ func (s *Store) loadPolicies(ctx context.Context, state *State) error {
 }
 
 func (s *Store) loadCollections(ctx context.Context, state *State) error {
-	if len(state.Collections) > 0 {
-		return nil
-	}
-
 	rows, err := s.pool.Query(ctx, `
 		SELECT
 			c.id::text,
 			c.name,
-			c.name,
-			'/collections/' || c.slug,
+			COALESCE(parent.name, c.name),
+			'/collections/' || COALESCE(parent.slug || '/', '') || c.slug,
 			COALESCE(c.description, ''),
 			COALESCE(
 				ARRAY(
@@ -375,8 +369,18 @@ func (s *Store) loadCollections(ctx context.Context, state *State) error {
 				ARRAY[]::text[]
 			)
 		FROM categories c
+		LEFT JOIN categories parent ON parent.id = c.parent_id
 		WHERE c.is_active = TRUE
-		ORDER BY c.sort_order NULLS LAST, c.name
+			AND NOT EXISTS (
+				SELECT 1
+				FROM categories child
+				WHERE child.parent_id = c.id AND child.is_active = TRUE
+			)
+		ORDER BY
+			COALESCE(parent.sort_order, c.sort_order) NULLS LAST,
+			COALESCE(parent.name, c.name),
+			c.sort_order NULLS LAST,
+			c.name
 	`)
 	if err != nil {
 		return fmt.Errorf("load categories: %w", err)
@@ -408,7 +412,7 @@ func (s *Store) loadProducts(ctx context.Context, state *State) error {
 			p.id::text,
 			p.name,
 			COALESCE(c.name, ''),
-			COALESCE('/collections/' || c.slug, ''),
+			COALESCE('/collections/' || COALESCE(pc.slug || '/', '') || c.slug, ''),
 			COALESCE(p.price, 0),
 			COALESCE(p.compare_price, 0),
 			COALESCE(p.badge, ''),
@@ -421,6 +425,7 @@ func (s *Store) loadProducts(ctx context.Context, state *State) error {
 			COALESCE(p.gst_rate, 0)
 		FROM products p
 		LEFT JOIN categories c ON c.id = p.category_id
+		LEFT JOIN categories pc ON pc.id = c.parent_id
 		LEFT JOIN inventory i ON i.product_id = p.id
 		LEFT JOIN LATERAL (
 			SELECT image_url

@@ -1,7 +1,10 @@
 import ProductArtwork from '../../components/ProductArtwork';
+import { useStorefront } from '../../StorefrontData';
 import { formatCurrency } from '../../utils';
 
 function CartPage({ cartItems, onNavigate, onQuantityChange, onRemove }) {
+  const { content } = useStorefront();
+  const continueShoppingPath = content.hero.primaryPath || '/';
   const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   return (
@@ -14,7 +17,7 @@ function CartPage({ cartItems, onNavigate, onQuantityChange, onRemove }) {
           {cartItems.length === 0 ? (
             <div className="cart-empty">
               <p>Your cart is empty.</p>
-              <button onClick={() => onNavigate('/collections/traditional/sarees')} type="button">
+              <button onClick={() => onNavigate(continueShoppingPath)} type="button">
                 Continue shopping
               </button>
             </div>
@@ -54,7 +57,7 @@ function CartPage({ cartItems, onNavigate, onQuantityChange, onRemove }) {
           <p>Summary</p>
           <h2>{formatCurrency(subtotal)}</h2>
           <span>Subtotal before shipping</span>
-          <button onClick={() => onNavigate('/collections/traditional/sarees')} type="button">
+          <button onClick={() => onNavigate(continueShoppingPath)} type="button">
             Continue shopping
           </button>
         </aside>

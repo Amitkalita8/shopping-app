@@ -46,6 +46,28 @@ func upsertCMSPage(ctx context.Context, tx pgx.Tx, slug string, title string, co
 	return nil
 }
 
+// saveCollections writes edited collection names and descriptions back to their categories,
+// which is where the storefront reads them from. Only rows that already exist are updated.
+func (s *Store) saveCollections(ctx context.Context, tx pgx.Tx, collections []Collection) error {
+	for _, collection := range collections {
+		categoryID, err := strconv.ParseInt(collection.ID, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		_, err = tx.Exec(ctx, `
+			UPDATE categories
+			SET name = $2, description = $3, updated_at = NOW()
+			WHERE id = $1
+		`, categoryID, collection.Label, collection.Description)
+		if err != nil {
+			return fmt.Errorf("update collection %s: %w", collection.ID, err)
+		}
+	}
+
+	return nil
+}
+
 func (s *Store) saveProducts(ctx context.Context, tx pgx.Tx, products []Product) error {
 	for _, product := range products {
 		productID, err := strconv.ParseInt(product.ID, 10, 64)
@@ -56,7 +78,7 @@ func (s *Store) saveProducts(ctx context.Context, tx pgx.Tx, products []Product)
 		var categoryID *int64
 		if product.Category != "" {
 			var catID int64
-			err := tx.QueryRow(ctx, `SELECT id FROM categories WHERE name = $1 LIMIT 1`, product.Category).Scan(&catID)
+			err := tx.QueryRow(ctx, `SELECT id FROM categories WHERE LOWER(name) = LOWER($1) LIMIT 1`, product.Category).Scan(&catID)
 			if err == nil {
 				categoryID = &catID
 			}

@@ -12,6 +12,7 @@ import (
 
 	"shopping-app/backend/internal/config"
 	"shopping-app/backend/internal/httpapi"
+	"shopping-app/backend/internal/migrate"
 )
 
 func Run() error {
@@ -20,6 +21,12 @@ func Run() error {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+
+	if cfg.DatabaseURL != "" {
+		if err := migrate.Up(context.Background(), cfg.DatabaseURL, logger); err != nil {
+			logger.Error("database migration failed", "error", err.Error())
+		}
+	}
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,

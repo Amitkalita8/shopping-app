@@ -1,12 +1,17 @@
-import { sidebarSections } from '../storeData';
+import { useStorefront } from '../StorefrontData';
+import UserAvatar from './UserAvatar';
 
-function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate, onOpenAuth, onToggleSection }) {
-  const socialLinks = [
-    { id: 'instagram', label: 'Instagram', shortLabel: 'ig' },
-    { id: 'facebook', label: 'Facebook', shortLabel: 'fb' },
-    { id: 'pinterest', label: 'Pinterest', shortLabel: 'pi' },
-    { id: 'youtube', label: 'YouTube', shortLabel: 'yt' },
-  ];
+function SidebarMenu({
+  currentPath,
+  expandedSection,
+  isOpen,
+  onClose,
+  onNavigate,
+  onOpenAuth,
+  onToggleSection,
+  user,
+}) {
+  const { content, menu } = useStorefront();
 
   return (
     <>
@@ -25,7 +30,7 @@ function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate
         </div>
 
         <div className="sidebar-sections">
-          {sidebarSections.map((section) => {
+          {menu.map((section) => {
             const isExpandable = Array.isArray(section.items);
             const isExpanded = expandedSection === section.id;
             const isChildActive = section.items?.some((item) => item.path === currentPath);
@@ -80,12 +85,16 @@ function SidebarMenu({ currentPath, expandedSection, isOpen, onClose, onNavigate
 
         <div className="sidebar-footer">
           <button className="sidebar-login" onClick={onOpenAuth} type="button">
-            <span aria-hidden="true" className="sidebar-login__icon header-utility__glyph header-utility__glyph--user" />
-            <span>Log in</span>
+            {user ? (
+              <UserAvatar user={user} />
+            ) : (
+              <span aria-hidden="true" className="sidebar-login__icon header-utility__glyph header-utility__glyph--user" />
+            )}
+            <span>{user ? user.fullName.split(' ')[0] : 'Log in'}</span>
             <span aria-hidden="true" className="sidebar-login__chevron" />
           </button>
           <div className="sidebar-socials" aria-label="Social links">
-            {socialLinks.map((link) => (
+            {content.socialLinks.map((link) => (
               <button aria-label={link.label} className="sidebar-social" key={link.id} type="button">
                 <span aria-hidden="true" className={`sidebar-social__glyph sidebar-social__glyph--${link.id}`}>
                   {link.shortLabel}

@@ -1,5 +1,6 @@
 import brandLogo from '../Assets/Logo.jpeg';
-import { navigationLinks } from '../storeData';
+import { useStorefront } from '../StorefrontData';
+import UserAvatar from './UserAvatar';
 
 function Header({
   cartCount,
@@ -10,7 +11,10 @@ function Header({
   onOpenAuth,
   onOpenCart,
   onSearchSubmit,
+  user,
 }) {
+  const { content, settings } = useStorefront();
+
   return (
     <header className="site-header">
       <div className="header-main">
@@ -50,13 +54,22 @@ function Header({
               <img alt="" className="brand-logo" src={brandLogo} />
             </span>
             <span className="brand-copy">
-              <span className="brand-copy__title">Atelier PS Vogue</span>
+              <span className="brand-copy__title">{settings.storeName}</span>
             </span>
           </button>
 
           <div className="header-utilities">
-            <button aria-label="Login or register" className="header-utility" onClick={onOpenAuth} type="button">
-              <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--user" />
+            <button
+              aria-label={user ? `Account of ${user.fullName}` : 'Login or register'}
+              className="header-utility"
+              onClick={onOpenAuth}
+              type="button"
+            >
+              {user ? (
+                <UserAvatar user={user} />
+              ) : (
+                <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--user" />
+              )}
             </button>
             <button aria-label="Offers" className="header-utility" type="button">
               <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--flash" />
@@ -80,7 +93,7 @@ function Header({
       <div className="header-nav">
         <div className="site-shell">
           <nav className="primary-nav" aria-label="Primary">
-            {navigationLinks.map((link) => (
+            {content.navigation.map((link) => (
               <button
                 className={currentPath.startsWith(link.match ?? link.path) ? 'is-active' : ''}
                 key={link.label}

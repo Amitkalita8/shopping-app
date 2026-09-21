@@ -509,6 +509,73 @@
   cursor: pointer;
 }
 
+.auth-form__submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth-form__error {
+  margin: 0;
+  padding: 0.75rem 0.95rem;
+  border-radius: 0.8rem;
+  background: #fbeceb;
+  color: #9b2c22;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.auth-google {
+  display: flex;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin-top: 1.35rem;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 1.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(17, 17, 17, 0.12);
+}
+
+.auth-session {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1.35rem;
+}
+
+.auth-session .user-avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 1.4rem;
+}
+
+.auth-session__name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.auth-session__meta {
+  margin: 0;
+  color: var(--muted);
+}
+
+.auth-session .auth-form__submit {
+  margin-top: 1rem;
+}
+
 .sidebar-drawer,
 .cart-drawer {
   position: fixed;
@@ -669,6 +736,35 @@
 
 .sidebar-login__icon {
   color: currentColor;
+}
+
+.user-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #111111;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.14);
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-login .user-avatar {
+  width: 1.9rem;
+  height: 1.9rem;
+  background: var(--white);
+  color: #111111;
+  box-shadow: none;
 }
 
 .sidebar-login__chevron {
@@ -1926,4 +2022,30 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.storefront-status {
+  display: grid;
+  gap: 1rem;
+  place-content: center;
+  justify-items: center;
+  min-height: 60vh;
+  padding: 2rem 1.5rem;
+  color: #574c48;
+  text-align: center;
+}
+
+.storefront-status p {
+  margin: 0;
+}
+
+.storefront-status button {
+  min-height: 3rem;
+  padding: 0 1.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: #111111;
+  color: var(--white);
+  font-weight: 700;
+  cursor: pointer;
 }

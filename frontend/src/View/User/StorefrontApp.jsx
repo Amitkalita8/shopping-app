@@ -1,23 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchCurrentUser, getStoredToken, storeToken } from './authApi';
 import AuthModal from './components/AuthModal';
 import CartDrawer from './components/CartDrawer';
 import Header from './components/Header';
 import SidebarMenu from './components/SidebarMenu';
 import { getRoute } from './routes';
-import { getProductPath, products, sidebarSections } from './storeData';
-import { getCartCount, getCurrentPath, toBrowserPath } from './utils';
+import { StorefrontDataProvider, StorefrontGate, useStorefront } from './StorefrontData';
+import { getCartCount, getCurrentPath, getProductPath, toBrowserPath } from './utils';
 import './Landing.css';
 
-function StorefrontApp() {
+function StorefrontShell() {
+  const storefront = useStorefront();
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [expandedSection, setExpandedSection] = useState(sidebarSections[0].id);
+  const [expandedSection, setExpandedSection] = useState(storefront.menu[0]?.id ?? null);
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [activeCartItemId, setActiveCartItemId] = useState(products[0].id);
+  const [user, setUser] = useState(null);
+  const [activeCartItemId, setActiveCartItemId] = useState(null);
 
-  const activeRoute = getRoute(currentPath);
+  const activeRoute = useMemo(() => getRoute(currentPath, storefront), [currentPath, storefront]);
   const ActivePage = activeRoute.component;
   const cartCount = getCartCount(cartItems);
   const activeCartItem = cartItems.find((item) => item.id === activeCartItemId) ?? cartItems[0] ?? null;
@@ -39,6 +42,22 @@ function StorefrontApp() {
       window.removeEventListener('popstate', syncPath);
       window.removeEventListener('keydown', handleEscape);
     };
+  }, []);
+
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) {
+      return;
+    }
+
+    fetchCurrentUser(token)
+      .then((session) => setUser(session.user))
+      .catch((error) => {
+        // Only drop the token when the server rejected it, not when it was unreachable.
+        if (error.status === 401) {
+          storeToken('');
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -125,6 +144,7 @@ function StorefrontApp() {
         onMenuToggle={() => setIsMenuOpen((current) => !current)}
         onNavigate={navigate}
         onOpenAuth={() => setIsAuthOpen(true)}
+        user={user}
         onOpenCart={() => {
           if (cartItems.length > 0) {
             setIsCartOpen(true);
@@ -148,6 +168,7 @@ function StorefrontApp() {
         onToggleSection={(sectionId) =>
           setExpandedSection((current) => (current === sectionId ? null : sectionId))
         }
+        user={user}
       />
 
       <CartDrawer
@@ -160,7 +181,19 @@ function StorefrontApp() {
         onRemove={handleRemoveFromCart}
       />
 
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <AuthModal
+        isOpen={isAuthOpen}
+        onAuthenticated={(signedInUser, token) => {
+          storeToken(token);
+          setUser(signedInUser);
+        }}
+        onClose={() => setIsAuthOpen(false)}
+        onLogout={() => {
+          storeToken('');
+          setUser(null);
+        }}
+        user={user}
+      />
 
       <ActivePage
         cartItems={cartItems}
@@ -170,9 +203,20 @@ function StorefrontApp() {
         onOpenProduct={(product) => navigate(getProductPath(product))}
         onQuantityChange={handleQuantityChange}
         onRemove={handleRemoveFromCart}
+        collection={activeRoute.collection}
         product={activeRoute.product}
       />
     </div>
+  );
+}
+
+function StorefrontApp() {
+  return (
+    <StorefrontDataProvider>
+      <StorefrontGate>
+        <StorefrontShell />
+      </StorefrontGate>
+    </StorefrontDataProvider>
   );
 }
 

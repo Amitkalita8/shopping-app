@@ -1,12 +1,20 @@
 name: Deploy to GitHub Pages
 
+# master -> https://amitkalita8.github.io/shopping-app/
+# dev    -> https://amitkalita8.github.io/shopping-app/dev/
 on:
   push:
     branches:
       - master
+      - dev
 
 permissions:
   contents: write
+
+# Both branches publish to the gh-pages branch, so runs must not overlap.
+concurrency:
+  group: github-pages-deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -28,13 +36,36 @@ jobs:
           npm ci
 
       - name: Build project
+        env:
+          # Repository variables (Settings > Secrets and variables > Actions > Variables).
+          API_BASE_URL_PROD: ${{ vars.API_BASE_URL }}
+          API_BASE_URL_DEV: ${{ vars.API_BASE_URL_DEV }}
+          REACT_APP_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
         run: |
           cd frontend
-          export PUBLIC_URL=/shopping-app
+          if [ "$GITHUB_REF_NAME" = "master" ]; then
+            export PUBLIC_URL=/shopping-app
+            export REACT_APP_API_BASE_URL="$API_BASE_URL_PROD"
+          else
+            export PUBLIC_URL=/shopping-app/dev
+            export REACT_APP_API_BASE_URL="$API_BASE_URL_DEV"
+          fi
           npm run build
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy master to the site root
+        if: github.ref_name == 'master'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: frontend/build
           branch: gh-pages
+          # Publishing production must not delete the dev copy.
+          clean-exclude: |
+            dev
+
+      - name: Deploy dev to /dev
+        if: github.ref_name == 'dev'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: frontend/build
+          branch: gh-pages
+          target-folder: dev
