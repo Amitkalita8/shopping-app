@@ -14,6 +14,25 @@ This folder now contains a starter Go backend for the project.
 - `internal/storefront` serves the public shop data (products, categories, home page, policies) from the database.
 - `internal/migrate` applies the versioned SQL in `internal/migrate/sql/` on startup.
 
+## Settings
+
+The server reads these environment variables. Locally it also reads a `backend/.env` file, which is
+never committed; on a host, set them in its dashboard.
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string. Without it the API starts but data endpoints answer 503. |
+| `AUTH_SECRET` | Signs login sessions. Set a long random value in production. |
+| `GOOGLE_CLIENT_ID` | Enables Google sign-in. |
+| `FRONTEND_ORIGIN` | Websites allowed to call the API, comma separated, for example `https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app`. |
+| `PORT` | Port to listen on (default `8080`). Hosts set this themselves. |
+
+At startup the server waits for the database (up to a minute, since hosted databases can be asleep),
+then applies any new migrations. It stays up even if the database never appears.
+
+The `docker build` context is this folder: `docker build -t shopping-api .` then
+`docker run -p 8080:8080 -e DATABASE_URL=... shopping-api`.
+
 ## Storefront API
 
 The shop website renders entirely from these read-only endpoints, backed by the database:
@@ -23,7 +42,8 @@ The shop website renders entirely from these read-only endpoints, backed by the 
 - `GET /api/v1/products` lists active products. Add `?collection=traditional/sarees` to list one collection.
 - `GET /api/v1/products/{slug}` returns one product, or 404.
 
-Content is edited through the admin panel (`/api/v1/admin/bootstrap`) or directly in the tables.
+Content is edited through the admin panel or directly in the tables. The admin endpoint,
+`/api/v1/admin/bootstrap`, requires a signed-in user whose `users.role` is `admin`; anyone else gets 401 or 403.
 Product images are stored as file names, such as `banarasi-saree-real.png`, that the frontend maps to its bundled assets, or as full URLs.
 
 ## Database migrations

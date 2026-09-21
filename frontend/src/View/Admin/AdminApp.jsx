@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import './AdminApp.css';
+import { API_BASE_URL } from '../../apiBase';
+import { getStoredToken } from '../User/authApi';
 import { cloneAdminState, DEFAULT_ADMIN_STATE } from './defaultAdminState';
 
 const sections = [
@@ -13,7 +15,21 @@ const sections = [
   { id: 'settings', label: 'Settings' },
 ];
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:8080';
+// The admin API only answers to a signed-in admin user, using the same login as the store.
+function adminHeaders(extra = {}) {
+  const token = getStoredToken();
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
+
+function describeAdminFailure(status, fallback) {
+  if (status === 401) {
+    return 'Sign in on the store with an admin account, then reopen this page.';
+  }
+  if (status === 403) {
+    return 'This account is not an admin.';
+  }
+  return fallback;
+}
 
 function normalizeAdminState(parsed) {
   return {
@@ -76,9 +92,11 @@ function AdminApp({ onNavigate }) {
 
     const loadAdmin = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/bootstrap`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/bootstrap`, { headers: adminHeaders() });
         if (!response.ok) {
-          throw new Error(`Failed with ${response.status}`);
+          const failure = new Error(`Failed with ${response.status}`);
+          failure.status = response.status;
+          throw failure;
         }
 
         const payload = await response.json();
@@ -90,7 +108,7 @@ function AdminApp({ onNavigate }) {
         setSelectedCustomerId(nextState.customers[0]?.id ?? null);
         setFlashMessage('Admin data loaded from API.');
       } catch (error) {
-        setFlashMessage('API unavailable. Using local defaults.');
+        setFlashMessage(describeAdminFailure(error.status, 'API unavailable. Using local defaults.'));
       }
     };
 
@@ -102,7 +120,8 @@ function AdminApp({ onNavigate }) {
       return undefined;
     }
 
-    const timer = window.setTimeout(() => setFlashMessage(''), 2200);
+    // Give longer messages time to be read.
+    const timer = window.setTimeout(() => setFlashMessage(''), flashMessage.length > 40 ? 6000 : 2200);
     return () => window.clearTimeout(timer);
   }, [flashMessage]);
 
@@ -140,19 +159,19 @@ function AdminApp({ onNavigate }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/admin/bootstrap`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: adminHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(adminState),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed with ${response.status}`);
+        const failure = new Error(`Failed with ${response.status}`);
+        failure.status = response.status;
+        throw failure;
       }
 
       showFlash(successMessage);
     } catch (error) {
-      showFlash('Failed to save to API.');
+      showFlash(describeAdminFailure(error.status, 'Failed to save to API.'));
     } finally {
       setIsSaving(false);
     }

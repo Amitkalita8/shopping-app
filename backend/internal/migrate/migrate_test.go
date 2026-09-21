@@ -8,7 +8,7 @@ import (
 )
 
 // Migrations run in file name order and are recorded by name, so names must be
-// unique, numbered, and never reordered once applied.
+// unique, numbered from 000 with no gaps, and never reordered once applied.
 func TestMigrationFilesAreNumberedInOrder(t *testing.T) {
 	entries, err := fs.ReadDir(files, "sql")
 	if err != nil {
@@ -31,7 +31,7 @@ func TestMigrationFilesAreNumberedInOrder(t *testing.T) {
 		t.Errorf("migrations are not listed in order: %v", names)
 	}
 	for i, name := range names {
-		if want := fmtVersion(i + 1); name[:3] != want {
+		if want := fmtVersion(i); name[:3] != want {
 			t.Errorf("migration %q: expected number %s (no gaps or duplicates)", name, want)
 		}
 	}

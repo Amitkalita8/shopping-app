@@ -1,0 +1,44 @@
+# Render Blueprint: one backend per branch, matching how the frontend is deployed.
+#   master -> shopping-app-api      (used by the live sites)
+#   dev    -> shopping-app-api-dev  (used by the dev sites)
+# In Render: New > Blueprint, pick this repository. It asks for each DATABASE_URL once.
+services:
+  - type: web
+    name: shopping-app-api
+    runtime: docker
+    branch: master
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Postgres connection string, e.g. from Neon: postgres://user:pass@host/db?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      # Signs login sessions. Generated once by Render; changing it logs everyone out.
+      - key: AUTH_SECRET
+        generateValue: true
+      # Public value, the same one the frontend uses.
+      - key: GOOGLE_CLIENT_ID
+        value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
+      # Websites allowed to call this API, comma separated, no trailing path.
+      - key: FRONTEND_ORIGIN
+        value: https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+
+  - type: web
+    name: shopping-app-api-dev
+    runtime: docker
+    branch: dev
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
+      - key: FRONTEND_ORIGIN
+        value: https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app

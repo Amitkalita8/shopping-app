@@ -163,30 +163,64 @@ func (h *Handler) googleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.sessionUser(w, r)
+	if !ok {
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]User{"user": user})
+}
+
+// sessionUser returns the user behind the request's bearer token. When there is none, it has
+// already written the error response and reports false.
+func (h *Handler) sessionUser(w http.ResponseWriter, r *http.Request) (User, bool) {
 	token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	if !ok {
 		writeError(w, http.StatusUnauthorized, "Please sign in.")
-		return
+		return User{}, false
 	}
 
 	userID, err := h.tokens.verify(strings.TrimSpace(token), time.Now())
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "Your session has expired. Please sign in again.")
-		return
+		return User{}, false
+	}
+
+	if h.store == nil {
+		writeError(w, http.StatusServiceUnavailable, "Accounts are temporarily unavailable.")
+		return User{}, false
 	}
 
 	user, err := h.store.FindByID(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrInactive) {
 			writeError(w, http.StatusUnauthorized, "Your session has expired. Please sign in again.")
-			return
+			return User{}, false
 		}
 
 		h.fail(w, "load session user", err)
-		return
+		return User{}, false
 	}
 
-	writeJSON(w, http.StatusOK, map[string]User{"user": user})
+	return user, true
+}
+
+// RequireRole lets a request through only when it carries a valid session token for a user with
+// the given role. The role is read from the database on every request, so removing it takes effect at once.
+func (h *Handler) RequireRole(role string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := h.sessionUser(w, r)
+		if !ok {
+			return
+		}
+
+		if user.Role != role {
+			writeError(w, http.StatusForbidden, "This account does not have access.")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // method rejects other HTTP methods and requests made while the database is not configured.

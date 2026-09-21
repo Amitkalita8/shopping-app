@@ -23,7 +23,9 @@ func Run() error {
 	}))
 
 	if cfg.DatabaseURL != "" {
-		if err := migrate.Up(context.Background(), cfg.DatabaseURL, logger); err != nil {
+		if err := waitForDatabase(context.Background(), cfg.DatabaseURL, databaseWaitTimeout, databaseRetryDelay, logger); err != nil {
+			logger.Error("database unavailable, starting without it", "error", err.Error())
+		} else if err := migrate.Up(context.Background(), cfg.DatabaseURL, logger); err != nil {
 			logger.Error("database migration failed", "error", err.Error())
 		}
 	}

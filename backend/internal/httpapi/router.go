@@ -61,7 +61,8 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 	if cfg.GoogleClientID == "" {
 		logger.Warn("GOOGLE_CLIENT_ID is not set; Google login is disabled")
 	}
-	auth.NewHandler(logger, authStore, authSecret, cfg.GoogleClientID).Routes(mux)
+	authHandler := auth.NewHandler(logger, authStore, authSecret, cfg.GoogleClientID)
+	authHandler.Routes(mux)
 	storefront.NewHandler(logger, storefrontStore).Routes(mux)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +83,8 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 
 	mux.Handle("/health", health.Handler(serviceName))
 	mux.Handle("/api/v1/health", health.Handler(serviceName))
-	mux.HandleFunc("/api/v1/admin/bootstrap", func(w http.ResponseWriter, r *http.Request) {
+	// The admin API exposes every customer and can rewrite prices, so it is limited to admin users.
+	mux.Handle("/api/v1/admin/bootstrap", authHandler.RequireRole(auth.RoleAdmin, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if adminStore == nil {
 			http.Error(w, "database is not configured", http.StatusServiceUnavailable)
 			return
@@ -116,7 +118,7 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 			w.Header().Set("Allow", "GET, PUT")
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		}
-	})
+	})))
 
 	return corsMiddleware(cfg.FrontendOrigin, loggingMiddleware(logger, mux))
 }

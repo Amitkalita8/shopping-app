@@ -16,6 +16,10 @@ const (
 	AuthTypeBoth   = "both"
 
 	roleCustomer = "customer"
+
+	// RoleAdmin is the users.role value that may use the admin API. Set it in the database:
+	//   UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
+	RoleAdmin = "admin"
 )
 
 var (

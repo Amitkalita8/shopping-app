@@ -112,3 +112,19 @@ func TestCORSPreflightIsAnsweredWithoutReachingTheRoute(t *testing.T) {
 		t.Fatalf("preflight: status %d, allow-origin %q", rec.Code, rec.Header().Get("Access-Control-Allow-Origin"))
 	}
 }
+
+func TestAdminAPIRequiresASession(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000"})
+
+	for _, method := range []string{http.MethodGet, http.MethodPut} {
+		req := httptest.NewRequest(method, "/api/v1/admin/bootstrap", nil)
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("%s /api/v1/admin/bootstrap without a session: status %d, want %d", method, rec.Code, http.StatusUnauthorized)
+		}
+	}
+}

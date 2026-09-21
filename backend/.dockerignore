@@ -1,0 +1,10 @@
+# Never bake secrets or local build output into an image.
+.env
+.env.*
+*.exe
+.gocache
+.appdata
+.gopath
+bin
+coverage.out
+ShareModal.css

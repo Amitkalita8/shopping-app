@@ -1,6 +1,10 @@
 package auth
 
 import (
+	"io"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -64,5 +68,45 @@ func TestNormalizeMobile(t *testing.T) {
 		if got := normalizeMobile(input); got != want {
 			t.Errorf("normalizeMobile(%q) = %q, want %q", input, got, want)
 		}
+	}
+}
+
+func TestRequireRoleRejectsRequestsWithoutAValidSession(t *testing.T) {
+	handler := NewHandler(slog.New(slog.NewTextHandler(io.Discard, nil)), nil, "test-secret", "")
+	reached := false
+	protected := handler.RequireRole(RoleAdmin, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reached = true
+	}))
+
+	valid, _ := handler.tokens.issue(1, time.Now())
+	expired, _ := handler.tokens.issue(1, time.Now().Add(-2*tokenLifetime))
+	forged, _ := tokenSigner{secret: []byte("someone-elses-secret")}.issue(1, time.Now())
+
+	for name, tc := range map[string]struct {
+		header string
+		want   int
+	}{
+		"no header":        {"", http.StatusUnauthorized},
+		"not a bearer":     {"Basic abc", http.StatusUnauthorized},
+		"garbage token":    {"Bearer abc.def", http.StatusUnauthorized},
+		"expired token":    {"Bearer " + expired, http.StatusUnauthorized},
+		"forged signature": {"Bearer " + forged, http.StatusUnauthorized},
+		"valid but no db":  {"Bearer " + valid, http.StatusServiceUnavailable},
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		if tc.header != "" {
+			req.Header.Set("Authorization", tc.header)
+		}
+		rec := httptest.NewRecorder()
+
+		protected.ServeHTTP(rec, req)
+
+		if rec.Code != tc.want {
+			t.Errorf("%s: status %d, want %d", name, rec.Code, tc.want)
+		}
+	}
+
+	if reached {
+		t.Fatal("the protected handler must never run without a valid admin session")
 	}
 }
