@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchCurrentUser, getStoredToken, storeToken } from './authApi';
+import { addCartItem, fetchCart, removeCartItem, updateCartItemQuantity } from './cartApi';
+import { addToWishlist, fetchWishlist, removeFromWishlist } from './wishlistApi';
 import AuthModal from './components/AuthModal';
 import CartDrawer from './components/CartDrawer';
 import Header from './components/Header';
@@ -15,10 +17,24 @@ function StorefrontShell() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState(storefront.menu[0]?.id ?? null);
   const [cartItems, setCartItems] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [activeCartItemId, setActiveCartItemId] = useState(null);
+
+  // Cart items in the database only carry a product id and quantity; the full product details
+  // (title, image, price, color...) always come from the already-loaded storefront catalog.
+  const hydrateCartItems = useCallback(
+    (items) =>
+      items
+        .map((item) => {
+          const product = storefront.getProductById(item.productId);
+          return product ? { ...product, quantity: item.quantity } : null;
+        })
+        .filter(Boolean),
+    [storefront]
+  );
 
   const activeRoute = useMemo(() => getRoute(currentPath, storefront), [currentPath, storefront]);
   const ActivePage = activeRoute.component;
@@ -59,6 +75,26 @@ function StorefrontShell() {
         }
       });
   }, []);
+
+  // The cart and wishlist live in the database against the signed-in user, so they load fresh on
+  // login and clear on logout rather than staying around as leftover local state.
+  useEffect(() => {
+    if (!user) {
+      setCartItems([]);
+      setWishlistIds([]);
+      return;
+    }
+
+    const token = getStoredToken();
+
+    fetchCart(token)
+      .then(({ items }) => setCartItems(hydrateCartItems(items)))
+      .catch(() => {});
+
+    fetchWishlist(token)
+      .then(({ items }) => setWishlistIds(items))
+      .catch(() => {});
+  }, [user, hydrateCartItems]);
 
   useEffect(() => {
     document.body.style.overflow = isMenuOpen || isCartOpen || isAuthOpen ? 'hidden' : '';
@@ -102,37 +138,52 @@ function StorefrontShell() {
   };
 
   const handleAddToCart = (product, quantity = 1) => {
-    setCartItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product.id);
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
 
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
-        );
-      }
-
-      return [...currentItems, { ...product, quantity }];
-    });
-
-    setActiveCartItemId(product.id);
-    setIsCartOpen(true);
+    addCartItem(getStoredToken(), product.id, quantity)
+      .then(({ items }) => {
+        setCartItems(hydrateCartItems(items));
+        setActiveCartItemId(product.id);
+        setIsCartOpen(true);
+      })
+      .catch(() => {});
   };
 
   const handleQuantityChange = (productId, delta) => {
-    setCartItems((currentItems) =>
-      currentItems.flatMap((item) => {
-        if (item.id !== productId) {
-          return [item];
-        }
+    const current = cartItems.find((item) => item.id === productId);
+    if (!current) {
+      return;
+    }
 
-        const nextQuantity = item.quantity + delta;
-        return nextQuantity > 0 ? [{ ...item, quantity: nextQuantity }] : [];
-      })
-    );
+    const nextQuantity = current.quantity + delta;
+    const token = getStoredToken();
+    const request =
+      nextQuantity > 0 ? updateCartItemQuantity(token, productId, nextQuantity) : removeCartItem(token, productId);
+
+    request.then(({ items }) => setCartItems(hydrateCartItems(items))).catch(() => {});
   };
 
   const handleRemoveFromCart = (productId) => {
-    setCartItems((currentItems) => currentItems.filter((item) => item.id !== productId));
+    removeCartItem(getStoredToken(), productId)
+      .then(({ items }) => setCartItems(hydrateCartItems(items)))
+      .catch(() => {});
+  };
+
+  const handleToggleWishlist = (product) => {
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+
+    const token = getStoredToken();
+    const request = wishlistIds.includes(product.id)
+      ? removeFromWishlist(token, product.id)
+      : addToWishlist(token, product.id);
+
+    request.then(({ items }) => setWishlistIds(items)).catch(() => {});
   };
 
   return (
@@ -152,7 +203,15 @@ function StorefrontShell() {
             navigate('/cart');
           }
         }}
+        onOpenWishlist={() => {
+          if (!user) {
+            setIsAuthOpen(true);
+            return;
+          }
+          navigate('/wishlist');
+        }}
         onSearchSubmit={handleSearchSubmit}
+        wishlistCount={wishlistIds.length}
       />
 
       <SidebarMenu
@@ -192,6 +251,8 @@ function StorefrontShell() {
           storeToken('');
           setUser(null);
         }}
+        onNavigate={navigate}
+        onProfileUpdated={setUser}
         user={user}
       />
 
@@ -201,9 +262,14 @@ function StorefrontShell() {
         onMenuOpen={() => setIsMenuOpen(true)}
         onNavigate={navigate}
         onOpenProduct={(product) => navigate(getProductPath(product))}
+        onOrderPlaced={() => setCartItems([])}
         onQuantityChange={handleQuantityChange}
         onRemove={handleRemoveFromCart}
+        onToggleWishlist={handleToggleWishlist}
+        user={user}
+        wishlistIds={wishlistIds}
         collection={activeRoute.collection}
+        orderId={activeRoute.orderId}
         product={activeRoute.product}
       />
     </div>

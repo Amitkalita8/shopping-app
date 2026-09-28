@@ -38,6 +38,8 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/auth/login", h.method(http.MethodPost, h.login))
 	mux.HandleFunc("/api/v1/auth/google", h.method(http.MethodPost, h.googleLogin))
 	mux.HandleFunc("/api/v1/auth/me", h.method(http.MethodGet, h.me))
+	mux.HandleFunc("PUT /api/v1/auth/profile", h.RequireAuth(h.updateProfile))
+	mux.HandleFunc("DELETE /api/v1/auth/account", h.RequireAuth(h.deleteAccount))
 }
 
 type sessionResponse struct {
@@ -171,6 +173,67 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]User{"user": user})
 }
 
+type updateProfileRequest struct {
+	FullName string `json:"fullName"`
+	GST      string `json:"gst"`
+}
+
+// updateProfile changes the display name and, when not already set at registration, the GST
+// number. Email, mobile and password have their own dedicated flows.
+func (h *Handler) updateProfile(w http.ResponseWriter, r *http.Request, user User) {
+	var body updateProfileRequest
+	if !decodeBody(w, r, &body) {
+		return
+	}
+
+	fullName := strings.TrimSpace(body.FullName)
+	gst := strings.ToUpper(strings.TrimSpace(body.GST))
+
+	switch {
+	case fullName == "":
+		writeError(w, http.StatusBadRequest, "Enter your full name.")
+		return
+	case gst != "" && len(gst) != 15:
+		writeError(w, http.StatusBadRequest, "GST number must be 15 characters.")
+		return
+	}
+
+	updated, err := h.store.UpdateProfile(r.Context(), user.ID, fullName, gst)
+	if err != nil {
+		h.fail(w, "update profile", err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]User{"user": updated})
+}
+
+type deleteAccountRequest struct {
+	Password string `json:"password"`
+}
+
+// deleteAccount permanently removes the signed-in account. A password-based account must confirm
+// its current password; a Google-only account has none to check.
+func (h *Handler) deleteAccount(w http.ResponseWriter, r *http.Request, user User) {
+	var body deleteAccountRequest
+	if !decodeBody(w, r, &body) {
+		return
+	}
+
+	if err := h.store.DeleteAccount(r.Context(), user.ID, body.Password); err != nil {
+		switch {
+		case errors.Is(err, ErrInvalidCredentials):
+			writeError(w, http.StatusUnauthorized, "Incorrect password.")
+		case errors.Is(err, ErrUserNotFound):
+			writeError(w, http.StatusNotFound, "Account not found.")
+		default:
+			h.fail(w, "delete account", err)
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 // sessionUser returns the user behind the request's bearer token. When there is none, it has
 // already written the error response and reports false.
 func (h *Handler) sessionUser(w http.ResponseWriter, r *http.Request) (User, bool) {
@@ -221,6 +284,19 @@ func (h *Handler) RequireRole(role string, next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// RequireAuth lets a request through only when it carries a valid session token, and hands the
+// signed-in user to next. Other packages use this to build endpoints that are tied to a customer.
+func (h *Handler) RequireAuth(next func(w http.ResponseWriter, r *http.Request, user User)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, ok := h.sessionUser(w, r)
+		if !ok {
+			return
+		}
+
+		next(w, r, user)
+	}
 }
 
 // method rejects other HTTP methods and requests made while the database is not configured.

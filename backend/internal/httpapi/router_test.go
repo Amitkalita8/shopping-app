@@ -128,3 +128,65 @@ func TestAdminAPIRequiresASession(t *testing.T) {
 		}
 	}
 }
+
+func TestCartAndWishlistRequireASession(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000"})
+
+	requests := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/api/v1/cart"},
+		{http.MethodPost, "/api/v1/cart/items"},
+		{http.MethodPut, "/api/v1/cart/items/banarasi-saree"},
+		{http.MethodDelete, "/api/v1/cart/items/banarasi-saree"},
+		{http.MethodGet, "/api/v1/wishlist"},
+		{http.MethodPost, "/api/v1/wishlist"},
+		{http.MethodDelete, "/api/v1/wishlist/banarasi-saree"},
+	}
+
+	for _, request := range requests {
+		req := httptest.NewRequest(request.method, request.path, nil)
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("%s %s without a session: status %d, want %d", request.method, request.path, rec.Code, http.StatusUnauthorized)
+		}
+	}
+}
+
+func TestCheckoutAndAddressRequireASession(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000"})
+
+	requests := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/api/v1/account/addresses"},
+		{http.MethodPost, "/api/v1/account/addresses"},
+		{http.MethodPut, "/api/v1/account/addresses/1"},
+		{http.MethodDelete, "/api/v1/account/addresses/1"},
+		{http.MethodPut, "/api/v1/account/addresses/1/default"},
+		{http.MethodPost, "/api/v1/checkout"},
+		{http.MethodPost, "/api/v1/checkout/verify"},
+		{http.MethodGet, "/api/v1/orders"},
+		{http.MethodGet, "/api/v1/orders/1"},
+		{http.MethodPut, "/api/v1/auth/profile"},
+		{http.MethodDelete, "/api/v1/auth/account"},
+	}
+
+	for _, request := range requests {
+		req := httptest.NewRequest(request.method, request.path, nil)
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("%s %s without a session: status %d, want %d", request.method, request.path, rec.Code, http.StatusUnauthorized)
+		}
+	}
+}

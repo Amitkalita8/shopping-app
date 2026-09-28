@@ -3,11 +3,12 @@ import { getProductGallery } from '../../productGallery';
 import { useStorefront } from '../../StorefrontData';
 import { formatCurrency } from '../../utils';
 
-function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
+function ProductDetailsPage({ onAddToCart, onNavigate, onToggleWishlist, product, wishlistIds = [] }) {
   const { content, policies } = useStorefront();
   const { collection } = product;
   const { productPage } = content;
   const gallery = useMemo(() => getProductGallery(product), [product]);
+  const isWishlisted = wishlistIds.includes(product.id);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -180,6 +181,13 @@ function ProductDetailsPage({ onAddToCart, onNavigate, product }) {
               type="button"
             >
               Buy It Now
+            </button>
+            <button
+              aria-pressed={isWishlisted}
+              onClick={() => onToggleWishlist(product)}
+              type="button"
+            >
+              {isWishlisted ? 'Saved To Wishlist' : 'Add To Wishlist'}
             </button>
           </div>
 

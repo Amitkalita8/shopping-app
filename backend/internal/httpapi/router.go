@@ -10,11 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"shopping-app/backend/internal/address"
 	"shopping-app/backend/internal/admin"
 	"shopping-app/backend/internal/auth"
+	"shopping-app/backend/internal/cart"
 	"shopping-app/backend/internal/config"
 	"shopping-app/backend/internal/health"
+	"shopping-app/backend/internal/orders"
 	"shopping-app/backend/internal/storefront"
+	"shopping-app/backend/internal/wishlist"
 )
 
 const serviceName = "shopping-app-backend"
@@ -30,6 +34,10 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 	var adminStore *admin.Store
 	var authStore *auth.Store
 	var storefrontStore *storefront.Store
+	var cartStore *cart.Store
+	var wishlistStore *wishlist.Store
+	var addressStore *address.Store
+	var ordersStore *orders.Store
 	if cfg.DatabaseURL != "" {
 		store, err := admin.NewStore(context.Background(), cfg.DatabaseURL)
 		if err != nil {
@@ -51,6 +59,34 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 		} else {
 			storefrontStore = shop
 		}
+
+		bags, err := cart.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Error("failed to initialize cart store", "error", err.Error())
+		} else {
+			cartStore = bags
+		}
+
+		saved, err := wishlist.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Error("failed to initialize wishlist store", "error", err.Error())
+		} else {
+			wishlistStore = saved
+		}
+
+		addresses, err := address.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Error("failed to initialize address store", "error", err.Error())
+		} else {
+			addressStore = addresses
+		}
+
+		checkout, err := orders.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Error("failed to initialize orders store", "error", err.Error())
+		} else {
+			ordersStore = checkout
+		}
 	}
 
 	authSecret := cfg.AuthSecret
@@ -61,9 +97,16 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 	if cfg.GoogleClientID == "" {
 		logger.Warn("GOOGLE_CLIENT_ID is not set; Google login is disabled")
 	}
+	if cfg.RazorpayKeyID == "" || cfg.RazorpayKeySecret == "" {
+		logger.Warn("RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET are not set; online payment is disabled, cash on delivery still works")
+	}
 	authHandler := auth.NewHandler(logger, authStore, authSecret, cfg.GoogleClientID)
 	authHandler.Routes(mux)
 	storefront.NewHandler(logger, storefrontStore).Routes(mux)
+	cart.NewHandler(logger, cartStore, authHandler).Routes(mux)
+	wishlist.NewHandler(logger, wishlistStore, authHandler).Routes(mux)
+	address.NewHandler(logger, addressStore, authHandler).Routes(mux)
+	orders.NewHandler(logger, ordersStore, authHandler, cfg.RazorpayKeyID, cfg.RazorpayKeySecret).Routes(mux)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

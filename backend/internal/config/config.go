@@ -9,11 +9,13 @@ const defaultPort = "8080"
 const defaultFrontendOrigin = "http://localhost:3000"
 
 type Config struct {
-	Port           string
-	DatabaseURL    string
-	FrontendOrigin string
-	AuthSecret     string
-	GoogleClientID string
+	Port              string
+	DatabaseURL       string
+	FrontendOrigin    string
+	AuthSecret        string
+	GoogleClientID    string
+	RazorpayKeyID     string
+	RazorpayKeySecret string
 }
 
 // loadDotEnv reads KEY=VALUE lines from path into the process environment.
@@ -60,10 +62,12 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:           port,
-		DatabaseURL:    databaseURL,
-		FrontendOrigin: frontendOrigin,
-		AuthSecret:     strings.TrimSpace(os.Getenv("AUTH_SECRET")),
-		GoogleClientID: strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
+		Port:              port,
+		DatabaseURL:       databaseURL,
+		FrontendOrigin:    frontendOrigin,
+		AuthSecret:        strings.TrimSpace(os.Getenv("AUTH_SECRET")),
+		GoogleClientID:    strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
+		RazorpayKeyID:     strings.TrimSpace(os.Getenv("RAZORPAY_KEY_ID")),
+		RazorpayKeySecret: strings.TrimSpace(os.Getenv("RAZORPAY_KEY_SECRET")),
 	}
 }

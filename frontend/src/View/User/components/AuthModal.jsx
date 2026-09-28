@@ -1,5 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GOOGLE_CLIENT_ID, loginWithGoogle, loginWithPassword, registerAccount } from '../authApi';
+import {
+  createAddress,
+  deleteAddress,
+  fetchAddresses,
+  setDefaultAddress,
+  updateAddress,
+} from '../addressApi';
+import {
+  GOOGLE_CLIENT_ID,
+  deleteAccount,
+  getStoredToken,
+  loginWithGoogle,
+  loginWithPassword,
+  registerAccount,
+  updateProfile,
+} from '../authApi';
+import AddressForm from './AddressForm';
+import AddressList from './AddressList';
 import UserAvatar from './UserAvatar';
 
 const loginFields = [
@@ -49,12 +66,28 @@ function loadGoogleScript() {
   return googleScriptPromise;
 }
 
-function AuthModal({ isOpen, onClose, user, onAuthenticated, onLogout }) {
+function AuthModal({ isOpen, onClose, user, onAuthenticated, onLogout, onNavigate, onProfileUpdated }) {
   const [activeTab, setActiveTab] = useState('login');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const googleButtonRef = useRef(null);
   const googleCredentialHandlerRef = useRef(null);
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
+  const [addresses, setAddresses] = useState([]);
+  const [isAddressesLoading, setIsAddressesLoading] = useState(false);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [addressError, setAddressError] = useState('');
+
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const formFields = useMemo(
     () => (activeTab === 'login' ? loginFields : registrationFields),
@@ -116,6 +149,43 @@ function AuthModal({ isOpen, onClose, user, onAuthenticated, onLogout }) {
     };
   }, [isOpen, user, activeTab]);
 
+  // The account tools (profile, addresses, delete) reset whenever the modal is closed or a
+  // different account signs in, so reopening it never shows a stale in-progress edit.
+  useEffect(() => {
+    setIsEditingProfile(false);
+    setProfileError('');
+    setIsAddingAddress(false);
+    setEditingAddress(null);
+    setAddressError('');
+    setIsConfirmingDelete(false);
+    setDeletePassword('');
+    setDeleteError('');
+  }, [isOpen, user?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !user) {
+      return;
+    }
+
+    let isCancelled = false;
+    setIsAddressesLoading(true);
+
+    fetchAddresses(getStoredToken())
+      .then(({ items }) => {
+        if (!isCancelled) setAddresses(items);
+      })
+      .catch((error) => {
+        if (!isCancelled) setAddressError(error.message);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsAddressesLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, user]);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setErrorMessage('');
@@ -151,6 +221,86 @@ function AuthModal({ isOpen, onClose, user, onAuthenticated, onLogout }) {
     onClose();
   };
 
+  const handleProfileSubmit = async (event) => {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+
+    setProfileError('');
+    setIsSavingProfile(true);
+
+    try {
+      const { user: updated } = await updateProfile(getStoredToken(), values);
+      onProfileUpdated(updated);
+      setIsEditingProfile(false);
+    } catch (error) {
+      setProfileError(error.message);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleAddressSubmit = async (event) => {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+
+    setAddressError('');
+    setIsSavingAddress(true);
+
+    try {
+      if (editingAddress) {
+        const saved = await updateAddress(getStoredToken(), editingAddress.id, values);
+        setAddresses((current) => current.map((address) => (address.id === saved.id ? saved : address)));
+      } else {
+        const saved = await createAddress(getStoredToken(), values);
+        setAddresses((current) => [...current, saved]);
+      }
+
+      setEditingAddress(null);
+      setIsAddingAddress(false);
+    } catch (error) {
+      setAddressError(error.message);
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    setAddressError('');
+
+    try {
+      await deleteAddress(getStoredToken(), addressId);
+      setAddresses((current) => current.filter((address) => address.id !== addressId));
+    } catch (error) {
+      setAddressError(error.message);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId) => {
+    setAddressError('');
+
+    try {
+      await setDefaultAddress(getStoredToken(), addressId);
+      setAddresses((current) => current.map((address) => ({ ...address, isDefault: address.id === addressId })));
+    } catch (error) {
+      setAddressError(error.message);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    setIsDeletingAccount(true);
+
+    try {
+      await deleteAccount(getStoredToken(), deletePassword);
+      onLogout();
+      onClose();
+    } catch (error) {
+      setDeleteError(error.message);
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   const title = user ? 'Your account' : activeTab === 'login' ? 'Login' : 'Registration';
 
   return (
@@ -165,7 +315,7 @@ function AuthModal({ isOpen, onClose, user, onAuthenticated, onLogout }) {
       <section
         aria-hidden={!isOpen}
         aria-labelledby="auth-modal-title"
-        className={`auth-modal ${isOpen ? 'is-open' : ''}`}
+        className={`auth-modal ${isOpen ? 'is-open' : ''} ${user ? 'auth-modal--account' : ''}`}
         role="dialog"
       >
         <div className="auth-modal__panel">
@@ -186,9 +336,165 @@ function AuthModal({ isOpen, onClose, user, onAuthenticated, onLogout }) {
               <p className="auth-session__name">{user.fullName}</p>
               <p className="auth-session__meta">{user.email}</p>
               <p className="auth-session__meta">Signed in with {authTypeLabels[user.authType] ?? 'your account'}.</p>
+
+              <button
+                className="account-orders-link"
+                onClick={() => {
+                  onNavigate('/orders');
+                  onClose();
+                }}
+                type="button"
+              >
+                My Orders
+              </button>
+
+              <section className="account-section">
+                <div className="account-section__header">
+                  <h3>Profile</h3>
+                  {!isEditingProfile ? (
+                    <button onClick={() => setIsEditingProfile(true)} type="button">
+                      Edit
+                    </button>
+                  ) : null}
+                </div>
+
+                {isEditingProfile ? (
+                  <form className="auth-form" onSubmit={handleProfileSubmit}>
+                    <div className="auth-form__stack">
+                      <label className="auth-field" htmlFor="profile-full-name">
+                        <span>Full Name</span>
+                        <input defaultValue={user.fullName} id="profile-full-name" name="fullName" required type="text" />
+                      </label>
+                      <label className="auth-field" htmlFor="profile-gst">
+                        <span>
+                          GST Number<em>Optional</em>
+                        </span>
+                        <input defaultValue={user.gst} id="profile-gst" name="gst" maxLength={15} type="text" />
+                      </label>
+                    </div>
+
+                    {profileError ? (
+                      <p className="auth-form__error" role="alert">
+                        {profileError}
+                      </p>
+                    ) : null}
+
+                    <div className="auth-form__actions">
+                      <button className="auth-form__submit" disabled={isSavingProfile} type="submit">
+                        {isSavingProfile ? 'Saving...' : 'Save changes'}
+                      </button>
+                      <button className="is-link" onClick={() => setIsEditingProfile(false)} type="button">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="auth-session__meta">GST number: {user.gst || 'Not added'}</p>
+                )}
+              </section>
+
+              <section className="account-section">
+                <div className="account-section__header">
+                  <h3>Addresses</h3>
+                </div>
+
+                {addressError ? (
+                  <p className="auth-form__error" role="alert">
+                    {addressError}
+                  </p>
+                ) : null}
+
+                {isAddressesLoading ? (
+                  <p className="auth-session__meta">Loading addresses...</p>
+                ) : (
+                  <AddressList
+                    addresses={addresses}
+                    onDelete={handleDeleteAddress}
+                    onEdit={(address) => {
+                      setEditingAddress(address);
+                      setIsAddingAddress(false);
+                    }}
+                    onSetDefault={handleSetDefaultAddress}
+                  />
+                )}
+
+                {isAddingAddress || editingAddress ? (
+                  <AddressForm
+                    defaultValues={editingAddress}
+                    idPrefix="account-address"
+                    isSubmitting={isSavingAddress}
+                    onCancel={() => {
+                      setIsAddingAddress(false);
+                      setEditingAddress(null);
+                    }}
+                    onSubmit={handleAddressSubmit}
+                    submitLabel={editingAddress ? 'Save changes' : 'Add address'}
+                  />
+                ) : (
+                  <button className="is-link" onClick={() => setIsAddingAddress(true)} type="button">
+                    + Add a new address
+                  </button>
+                )}
+              </section>
+
               <button className="auth-form__submit" onClick={handleLogout} type="button">
                 Log out
               </button>
+
+              <section className="account-section account-section--danger">
+                {!isConfirmingDelete ? (
+                  <button className="account-danger__trigger" onClick={() => setIsConfirmingDelete(true)} type="button">
+                    Delete my account
+                  </button>
+                ) : (
+                  <div className="account-danger">
+                    <p>
+                      This permanently deletes your account, saved addresses, cart and wishlist. Past orders are kept
+                      for records but no longer linked to you. This cannot be undone.
+                    </p>
+
+                    {user.authType !== 'google' ? (
+                      <label className="auth-field" htmlFor="delete-password">
+                        <span>Confirm your password</span>
+                        <input
+                          id="delete-password"
+                          onChange={(event) => setDeletePassword(event.target.value)}
+                          type="password"
+                          value={deletePassword}
+                        />
+                      </label>
+                    ) : null}
+
+                    {deleteError ? (
+                      <p className="auth-form__error" role="alert">
+                        {deleteError}
+                      </p>
+                    ) : null}
+
+                    <div className="auth-form__actions">
+                      <button
+                        className="account-danger__confirm"
+                        disabled={isDeletingAccount}
+                        onClick={handleDeleteAccount}
+                        type="button"
+                      >
+                        {isDeletingAccount ? 'Deleting...' : 'Yes, delete my account'}
+                      </button>
+                      <button
+                        className="is-link"
+                        onClick={() => {
+                          setIsConfirmingDelete(false);
+                          setDeletePassword('');
+                          setDeleteError('');
+                        }}
+                        type="button"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </section>
             </div>
           ) : (
             <>

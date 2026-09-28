@@ -10,8 +10,10 @@ function Header({
   onNavigate,
   onOpenAuth,
   onOpenCart,
+  onOpenWishlist,
   onSearchSubmit,
   user,
+  wishlistCount,
 }) {
   const { content, settings } = useStorefront();
 
@@ -73,6 +75,15 @@ function Header({
             </button>
             <button aria-label="Offers" className="header-utility" type="button">
               <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--flash" />
+            </button>
+            <button
+              aria-label={`Wishlist ${wishlistCount} items`}
+              className="header-utility"
+              onClick={onOpenWishlist}
+              type="button"
+            >
+              <span aria-hidden="true" className="header-utility__glyph header-utility__glyph--heart" />
+              {wishlistCount > 0 ? <span className="header-utility__count">{wishlistCount}</span> : null}
             </button>
             <button
               aria-label={`Cart ${cartCount} items`}

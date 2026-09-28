@@ -44,6 +44,7 @@ type User struct {
 	AuthType  string `json:"authType"`
 	AvatarURL string `json:"avatarUrl"`
 	Role      string `json:"role"`
+	GST       string `json:"gst"`
 }
 
 type RegisterInput struct {
@@ -67,7 +68,8 @@ const userColumns = `
 	COALESCE(auth_type, 'normal'),
 	COALESCE(avatar_url, ''),
 	COALESCE(role, 'customer'),
-	COALESCE(is_active, TRUE)`
+	COALESCE(is_active, TRUE),
+	COALESCE(gst_number, '')`
 
 // userRecord is a users row including the password hash, which never leaves this package.
 type userRecord struct {
@@ -88,6 +90,7 @@ func scanUser(row pgx.Row) (userRecord, error) {
 		&record.AvatarURL,
 		&record.Role,
 		&record.isActive,
+		&record.GST,
 	)
 	return record, err
 }
@@ -127,6 +130,44 @@ func (s *Store) FindByID(ctx context.Context, id int64) (User, error) {
 	}
 
 	return record.User, nil
+}
+
+// UpdateProfile changes the editable parts of a profile: display name and GST number. Email,
+// mobile and password change through their own flows, not this one.
+func (s *Store) UpdateProfile(ctx context.Context, userID int64, fullName, gst string) (User, error) {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE users SET full_name = $2, gst_number = NULLIF($3, ''), updated_at = NOW()
+		WHERE id = $1
+	`, userID, fullName, gst)
+	if err != nil {
+		return User{}, fmt.Errorf("update profile: %w", err)
+	}
+
+	return s.FindByID(ctx, userID)
+}
+
+// DeleteAccount permanently removes a user and everything that only makes sense tied to them
+// (addresses, cart, wishlist); past orders are kept for business records but lose their link to
+// the account. A password-based account must supply its current password; a Google-only account
+// (no password set) has none to check.
+func (s *Store) DeleteAccount(ctx context.Context, userID int64, password string) error {
+	record, err := scanUser(s.pool.QueryRow(ctx, `SELECT `+userColumns+` FROM users WHERE id = $1`, userID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrUserNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("find user: %w", err)
+	}
+
+	if record.passwordHash != "" && !verifyPassword(password, record.passwordHash) {
+		return ErrInvalidCredentials
+	}
+
+	if _, err := s.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID); err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
+
+	return nil
 }
 
 // Register creates a normal (email + password) account together with its default address.

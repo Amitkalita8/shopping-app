@@ -1,7 +1,7 @@
 import ProductCard from '../../components/ProductCard';
 import { useStorefront } from '../../StorefrontData';
 
-function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
+function HomePage({ onAddToCart, onNavigate, onOpenProduct, onToggleWishlist, wishlistIds = [] }) {
   const { content, homeSections } = useStorefront();
   const { hero, spotlightCards } = content;
 
@@ -37,9 +37,11 @@ function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
           <section className="featured-strip" key={section.id}>
             {section.products.map((product) => (
               <ProductCard
+                isWishlisted={wishlistIds.includes(product.id)}
                 key={product.id}
                 onAddToCart={onAddToCart}
                 onOpenProduct={onOpenProduct}
+                onToggleWishlist={onToggleWishlist}
                 product={product}
               />
             ))}
@@ -59,9 +61,11 @@ function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
             <div className="product-grid">
               {section.products.map((product) => (
                 <ProductCard
+                  isWishlisted={wishlistIds.includes(product.id)}
                   key={product.id}
                   onAddToCart={onAddToCart}
                   onOpenProduct={onOpenProduct}
+                  onToggleWishlist={onToggleWishlist}
                   product={product}
                 />
               ))}

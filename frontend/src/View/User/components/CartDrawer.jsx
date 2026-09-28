@@ -58,7 +58,7 @@ function CartDrawer({ cartCount, cartItem, isOpen, onClose, onNavigate, onQuanti
           <button onClick={() => onNavigate('/cart')} type="button">
             View My Cart ({cartCount})
           </button>
-          <button className="is-dark" onClick={() => onNavigate('/cart')} type="button">
+          <button className="is-dark" onClick={() => onNavigate('/checkout')} type="button">
             Checkout
           </button>
           <button className="is-link" onClick={onClose} type="button">

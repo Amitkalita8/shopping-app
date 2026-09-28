@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 
-function CollectionPageLayout({ collection, onAddToCart, onMenuOpen, onOpenProduct }) {
+function CollectionPageLayout({
+  collection,
+  onAddToCart,
+  onMenuOpen,
+  onOpenProduct,
+  onToggleWishlist,
+  wishlistIds = [],
+}) {
   const [sortValue, setSortValue] = useState(collection.sortOptions[0]);
 
   useEffect(() => {
@@ -38,9 +45,11 @@ function CollectionPageLayout({ collection, onAddToCart, onMenuOpen, onOpenProdu
       <section className="product-grid product-grid--collection">
         {collection.products.map((product) => (
           <ProductCard
+            isWishlisted={wishlistIds.includes(product.id)}
             key={product.id}
             onAddToCart={onAddToCart}
             onOpenProduct={onOpenProduct}
+            onToggleWishlist={onToggleWishlist}
             product={product}
           />
         ))}

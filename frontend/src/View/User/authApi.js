@@ -59,3 +59,8 @@ export const loginWithPassword = (identity, password) =>
 export const loginWithGoogle = (credential) => request('/google', { method: 'POST', body: { credential } });
 
 export const fetchCurrentUser = (token) => request('/me', { token });
+
+export const updateProfile = (token, fields) => request('/profile', { method: 'PUT', body: fields, token });
+
+export const deleteAccount = (token, password) =>
+  request('/account', { method: 'DELETE', body: { password: password || '' }, token });

@@ -57,7 +57,10 @@ function CartPage({ cartItems, onNavigate, onQuantityChange, onRemove }) {
           <p>Summary</p>
           <h2>{formatCurrency(subtotal)}</h2>
           <span>Subtotal before shipping</span>
-          <button onClick={() => onNavigate(continueShoppingPath)} type="button">
+          <button onClick={() => onNavigate('/checkout')} type="button">
+            Checkout
+          </button>
+          <button className="is-link" onClick={() => onNavigate(continueShoppingPath)} type="button">
             Continue shopping
           </button>
         </aside>

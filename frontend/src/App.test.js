@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
-import { cloneStorefront, mockStorefrontApi } from './testing/mockStorefront';
+import { cloneStorefront, mockSignedInStorefrontApi, mockStorefrontApi } from './testing/mockStorefront';
+import { storeToken } from './View/User/authApi';
 
 const heroTitle = /sharper category pages, cleaner routing, and the old sidebar structure back in place/i;
 
@@ -11,6 +12,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete global.fetch;
+  storeToken('');
 });
 
 test('shows a loading state, then the home page from the api', async () => {
@@ -102,15 +104,57 @@ test('a collection page lists its products in the order the api gives', async ()
   ]);
 });
 
-test('opens the cart drawer from add to cart on the collection page', async () => {
+test('adding to cart while signed out asks the shopper to log in first', async () => {
   window.history.pushState({}, '', '/collections/traditional/sarees');
   render(<App />);
 
   fireEvent.click((await screen.findAllByRole('button', { name: /add to cart/i }))[0]);
 
-  expect(screen.getByText(/item added to your cart/i)).toBeInTheDocument();
+  expect(screen.getByRole('dialog', { name: /login/i })).toBeInTheDocument();
+  expect(screen.queryByText(/item added to your cart/i)).not.toBeInTheDocument();
+});
+
+test('opens the cart drawer from add to cart once signed in, backed by the cart api', async () => {
+  window.history.pushState({}, '', '/collections/traditional/sarees');
+  mockSignedInStorefrontApi();
+  render(<App />);
+
+  await screen.findByRole('button', { name: /account of asha rao/i });
+  fireEvent.click((await screen.findAllByRole('button', { name: /add to cart/i }))[0]);
+
+  expect(await screen.findByText(/item added to your cart/i)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /view my cart \(1\)/i })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /cart 1 items/i })).toBeInTheDocument();
+
+  const addCall = global.fetch.mock.calls.find(([url]) => String(url).endsWith('/api/v1/cart/items'));
+  expect(JSON.parse(addCall[1].body)).toEqual({ productId: 'banarasi-saree', quantity: 1 });
+});
+
+test('toggling the wishlist heart saves the product through the api', async () => {
+  window.history.pushState({}, '', '/collections/traditional/sarees');
+  mockSignedInStorefrontApi();
+  render(<App />);
+
+  await screen.findByRole('button', { name: /account of asha rao/i });
+  const heartButton = (
+    await screen.findAllByRole('button', { name: /add banarasi silk saree with blouse piece to wishlist/i })
+  )[0];
+  fireEvent.click(heartButton);
+
+  await waitFor(() =>
+    expect(
+      screen.getByRole('button', { name: /remove banarasi silk saree with blouse piece from wishlist/i })
+    ).toBeInTheDocument()
+  );
+
+  const addCall = global.fetch.mock.calls.find(
+    ([url, options]) => String(url).endsWith('/api/v1/wishlist') && options?.method === 'POST'
+  );
+  expect(JSON.parse(addCall[1].body)).toEqual({ productId: 'banarasi-saree' });
+
+  fireEvent.click(screen.getByRole('button', { name: /wishlist 1 items/i }));
+  expect(await screen.findByRole('heading', { name: /your wishlist/i, level: 1 })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /banarasi silk saree with blouse piece/i, level: 3 })).toBeInTheDocument();
 });
 
 test('opens a product details page with zoom preview when a product is clicked', async () => {
