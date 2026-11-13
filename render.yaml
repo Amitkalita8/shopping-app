@@ -1,8 +1,13 @@
-# Render Blueprint: one backend per branch, matching how the frontend is deployed.
-#   master -> shopping-app-api      (used by the live sites)
-#   dev    -> shopping-app-api-dev  (used by the dev sites)
+# Render Blueprint: the whole app, one copy per branch.
+#   master -> shopping-app-api      + shopping-app-web      (live)
+#   dev    -> shopping-app-api-dev  + shopping-app-web-dev  (testing)
 # In Render: New > Blueprint, pick this repository. It asks for each DATABASE_URL once.
+#
+# The website addresses below assume Render kept these service names as the
+# onrender.com subdomains. If Render added a suffix (name already taken), update
+# REACT_APP_API_BASE_URL and FRONTEND_ORIGIN to the real addresses.
 services:
+  # ---------- Backend (Go API) ----------
   - type: web
     name: shopping-app-api
     runtime: docker
@@ -23,7 +28,7 @@ services:
         value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
       # Websites allowed to call this API, comma separated, no trailing path.
       - key: FRONTEND_ORIGIN
-        value: https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+        value: https://shopping-app-web.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
 
   - type: web
     name: shopping-app-api-dev
@@ -41,4 +46,45 @@ services:
       - key: GOOGLE_CLIENT_ID
         value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
       - key: FRONTEND_ORIGIN
-        value: https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+        value: https://shopping-app-web-dev.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+
+  # ---------- Website (React, static) ----------
+  - type: web
+    name: shopping-app-web
+    runtime: static
+    branch: master
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Read at build time; changing it needs a redeploy of the site.
+      - key: REACT_APP_API_BASE_URL
+        value: https://shopping-app-api.onrender.com
+      - key: REACT_APP_GOOGLE_CLIENT_ID
+        value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
+    routes:
+      # Single-page app: every path is served index.html and React picks the page.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: web
+    name: shopping-app-web-dev
+    runtime: static
+    branch: dev
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: REACT_APP_API_BASE_URL
+        value: https://shopping-app-api-dev.onrender.com
+      - key: REACT_APP_GOOGLE_CLIENT_ID
+        value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
