@@ -6,7 +6,9 @@
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // https://github.com/rafgraph/spa-github-pages
-      var pathSegmentsToKeep = 1;
+      // GitHub Pages serves only this root 404.html for every missing path. The site lives at
+      // /shopping-app/ (master) and /shopping-app/dev/ (dev branch), so keep 1 or 2 leading segments.
+      var pathSegmentsToKeep = window.location.pathname.split('/')[2] === 'dev' ? 2 : 1;
 
       var l = window.location;
       l.replace(
