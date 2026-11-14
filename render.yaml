@@ -1,27 +1,18 @@
-# Render Blueprint: database, backend and website, one copy per branch.
-#   master -> shopping-app-db (Render Postgres) + shopping-app-api     + shopping-app-web     (live)
-#   dev    -> your own DATABASE_URL             + shopping-app-api-dev + shopping-app-web-dev (testing)
+# Render Blueprint: backend and website, one copy per branch. The databases are on Neon (free):
+#   master -> Neon database "live" + shopping-app-api     + shopping-app-web     (live)
+#   dev    -> Neon database "dev"  + shopping-app-api-dev + shopping-app-web-dev (testing)
 #
-# In Render: New > Blueprint, pick this repository. It asks for:
-#   - DB_ADMIN_PASSWORD for each API (the /db-admin login; user is root)
-#   - DATABASE_URL for the dev API only (e.g. a free Neon database)
+# In Render: New > Blueprint (or Sync on the existing one). It asks for, per API:
+#   - DATABASE_URL: the Neon connection string, postgres://user:pass@host/db?sslmode=require
+#   - DB_ADMIN_PASSWORD: the /db-admin login password (the user is root)
 # On first start each API creates every table and loads the store's products by itself.
 #
-# Render allows one free Postgres database per account, so only the live API gets one here.
-# A free Render database expires 30 days after it is created; upgrade its plan (basic-256mb)
-# before then to keep the data.
+# Not a Render database: Render allows one free Postgres per workspace (already used by
+# another project), and its free databases expire after 30 days. Neon's free plan does not.
 #
 # Render added a suffix to names that were already taken, so the live addresses are
 #   API https://shopping-app-api-it8x.onrender.com, website https://shopping-app-web-1931.onrender.com.
 # If a service is ever recreated with a new address, update REACT_APP_API_BASE_URL and FRONTEND_ORIGIN.
-
-databases:
-  - name: shopping-app-db
-    databaseName: shopping_app
-    user: shopping_app
-    plan: free
-    # Only Render services can connect; the data is viewed through /db-admin instead.
-    ipAllowList: []
 
 services:
   # ---------- Backend (Go API) ----------
@@ -34,11 +25,9 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
-      # Filled in by Render from the database above (private network address).
+      # Neon "live" database: postgres://user:pass@host/db?sslmode=require (Render asks for it).
       - key: DATABASE_URL
-        fromDatabase:
-          name: shopping-app-db
-          property: connectionString
+        sync: false
       # Signs login sessions. Generated once by Render; changing it logs everyone out.
       - key: AUTH_SECRET
         generateValue: true
