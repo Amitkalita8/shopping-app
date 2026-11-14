@@ -68,6 +68,14 @@ Then sign in on the store and open `/admin`. Roles are checked on every request,
 role back to `customer` locks that person out immediately. On GitHub Pages the admin address does not
 work because of the `/shopping-app/` prefix, so use the Vercel site or localhost for the admin panel.
 
+**Database browser.** Admins can view every table read-only at `/db-admin` on any of the websites,
+for example `http://localhost:3000/db-admin` or `https://amitkalita8.github.io/shopping-app/db-admin`.
+Pages have their own addresses, such as `/db-admin?route=/table/browse&table=users`. Sign in with the
+username and password set on the backend as `DB_ADMIN_USER` and `DB_ADMIN_PASSWORD` (in `backend/.env`
+locally, and in each Render API service under Environment). The backend
+also serves the same browser at `<api address>/db-admin`. See `backend/README.md` for what it hides
+and limits.
+
 ### Backend address for each environment
 
 Set these once, separately for production and dev:

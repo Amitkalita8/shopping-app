@@ -25,6 +25,7 @@ never committed; on a host, set them in its dashboard.
 | `AUTH_SECRET` | Signs login sessions. Set a long random value in production. |
 | `GOOGLE_CLIENT_ID` | Enables Google sign-in. |
 | `FRONTEND_ORIGIN` | Websites allowed to call the API, comma separated, for example `https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app`. |
+| `DB_ADMIN_USER` / `DB_ADMIN_PASSWORD` | Login for the database browser at `/db-admin`. The user defaults to `root`; without a password that login is off. Five wrong passwords from one address lock it out for 15 minutes. |
 | `PORT` | Port to listen on (default `8080`). Hosts set this themselves. |
 
 At startup the server waits for the database (up to a minute, since hosted databases can be asleep),
@@ -45,6 +46,18 @@ The shop website renders entirely from these read-only endpoints, backed by the 
 Content is edited through the admin panel or directly in the tables. The admin endpoint,
 `/api/v1/admin/bootstrap`, requires a signed-in user whose `users.role` is `admin`; anyone else gets 401 or 403.
 Product images are stored as file names, such as `banarasi-saree-real.png`, that the frontend maps to its bundled assets, or as full URLs.
+
+## Database browser (`/db-admin`)
+
+Open `http://localhost:8080/db-admin` (or `<api address>/db-admin` on a host) and sign in with the
+`DB_ADMIN_USER` / `DB_ADMIN_PASSWORD` login (a shop account whose role is `admin` is also accepted by
+the API). It lists every table with its row count, and for each table offers
+Browse (search, sort, paging), Structure (columns, types, keys) and a SQL tab. Links keep their place,
+for example `/db-admin?route=/table/browse&table=users`.
+
+It is read-only: everything runs in a read-only transaction, one statement at a time, stopped after
+5 seconds, with at most 500 rows. Columns whose names contain password, secret, token, hash or otp
+are shown as `••••••`. Its data endpoints live under `/api/v1/admin/db/` and need an admin login.
 
 ## Database migrations
 

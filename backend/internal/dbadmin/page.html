@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Shop DB Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cellipse cx='12' cy='5' rx='8' ry='3' fill='%232563eb'/%3E%3Cpath d='M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5c0 1.7-3.6 3-8 3S4 6.7 4 5z' fill='%231e3a8a'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f1f3f6;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --border: #dfe3ea;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --head: #1e293b;
+    --head-text: #f8fafc;
+    --head-muted: #cbd5e1;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eef4ff;
+    --accent-line: #bcd0fb;
+    --badge: #f97316;
+    --row-hover: #f3f7ff;
+    --danger: #b91c1c;
+    --danger-soft: #fef2f2;
+    --null: #9ca3af;
+    --pk: #b45309;
+    --pk-soft: #fef3c7;
+    --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f141b;
+      --surface: #161c25;
+      --surface-2: #1b2330;
+      --border: #2a3444;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --head: #0b1018;
+      --head-text: #f8fafc;
+      --head-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --accent-soft: #172338;
+      --accent-line: #29446f;
+      --row-hover: #1a2536;
+      --danger: #f87171;
+      --danger-soft: #2a1515;
+      --null: #64748b;
+      --pk: #fbbf24;
+      --pk-soft: #3a2e10;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; }
+
+  /* ---------- Sign in ---------- */
+  .login-wrap { min-height: 100%; display: grid; place-items: center; padding: 48px 16px; }
+  .login { width: 100%; max-width: 600px; background: var(--surface); border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; }
+  .login-head { background: var(--head); color: var(--head-text); text-align: center; padding: 36px 24px 30px; }
+  .login-head h1 { margin: 0; font-size: 34px; letter-spacing: -.5px; display: inline-flex; align-items: center; gap: 12px; }
+  .badge { background: var(--badge); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 10px; letter-spacing: 0; }
+  .login-head p { margin: 10px 0 0; color: var(--head-muted); font-size: 16px; }
+  .login-body { padding: 34px 36px 26px; }
+  .note { border: 1px dashed var(--accent-line); background: var(--accent-soft); border-radius: 6px; padding: 14px 18px; margin-bottom: 26px; color: var(--accent); }
+  .note strong { display: block; }
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-weight: 600; margin-bottom: 8px; }
+  .field input, .field select {
+    width: 100%; height: 48px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); font-size: 16px;
+  }
+  .field select:disabled { opacity: 1; background: var(--surface-2); }
+  .field input:focus, .field select:focus, .toolbar input:focus, textarea:focus, .sidebar input:focus {
+    outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent;
+  }
+  .primary {
+    width: 100%; height: 48px; border: 0; border-radius: 6px; background: var(--accent); color: #fff;
+    font-size: 17px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .primary:hover { background: var(--accent-hover); }
+  .primary:disabled { opacity: .6; cursor: progress; }
+  .error { background: var(--danger-soft); color: var(--danger); border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; }
+  .login-foot { border-top: 1px solid var(--border); margin-top: 28px; padding-top: 16px; display: flex; justify-content: space-between; gap: 12px; color: var(--muted); flex-wrap: wrap; }
+
+  /* ---------- App shell ---------- */
+  .app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+  .topbar { background: var(--head); color: var(--head-text); display: flex; align-items: center; gap: 16px; padding: 0 16px; height: 52px; }
+  .brand { font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+  .brand .badge { font-size: 11px; padding: 2px 8px; }
+  .topbar .server { color: var(--head-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .spacer { flex: 1; }
+  .topbar .who { color: var(--head-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .ghost { background: transparent; border: 1px solid rgba(255,255,255,.25); color: var(--head-text); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+  .ghost:hover { background: rgba(255,255,255,.08); }
+  .menu-btn { display: none; }
+  .body { display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+  .sidebar .db { padding: 14px 16px 8px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .sidebar input { margin: 0 12px 8px; height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+  .tables { list-style: none; margin: 0; padding: 0 6px 12px; overflow: auto; }
+  .tables a { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 5px; color: var(--text); text-decoration: none; }
+  .tables a:hover { background: var(--row-hover); }
+  .tables a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tables .count { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 400; }
+
+  main { overflow: auto; padding: 16px 20px 32px; min-width: 0; }
+  .crumbs { color: var(--muted); margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .crumbs a { color: var(--accent); text-decoration: none; }
+  .crumbs a:hover { text-decoration: underline; }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; }
+  .tabs a { padding: 9px 16px; text-decoration: none; color: var(--muted); border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; white-space: nowrap; }
+  .tabs a:hover { color: var(--text); }
+  .tabs a.active { color: var(--text); background: var(--surface); border-color: var(--border); margin-bottom: -1px; font-weight: 600; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .toolbar input[type=search] { height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); width: 280px; max-width: 100%; }
+  .toolbar select { height: 34px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); padding: 0 8px; }
+  .btn { height: 34px; padding: 0 14px; border: 1px solid var(--border); background: var(--surface); border-radius: 6px; cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.blue { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.blue:hover { background: var(--accent-hover); color: #fff; }
+  .info { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .grow { flex: 1; }
+
+  .grid-wrap { overflow: auto; max-height: calc(100vh - 250px); border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+  table.grid { border-collapse: collapse; width: max-content; min-width: 100%; font-variant-numeric: tabular-nums; }
+  .grid th, .grid td { padding: 7px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  .grid th { position: sticky; top: 0; background: var(--surface-2); z-index: 1; font-weight: 600; white-space: nowrap; }
+  .grid th button { all: unset; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .grid th button:hover { color: var(--accent); }
+  .grid th .arrow { color: var(--accent); font-size: 11px; }
+  .grid td { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .grid td.wrap { white-space: pre-wrap; max-width: 560px; word-break: break-word; }
+  .grid tbody tr:hover td { background: var(--row-hover); }
+  .grid tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+  .grid tbody tr:nth-child(even):hover td { background: var(--row-hover); }
+  .grid td.num { text-align: right; }
+  .null { color: var(--null); font-style: italic; }
+  .masked { color: var(--muted); letter-spacing: 2px; }
+  .pk { background: var(--pk-soft); color: var(--pk); font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
+  .tag { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-size: 11px; border-radius: 4px; padding: 0 6px; }
+  .empty { padding: 32px; text-align: center; color: var(--muted); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; text-decoration: none; color: var(--text); display: block; }
+  .card:hover { border-color: var(--accent); }
+  .card .name { font-weight: 600; word-break: break-word; }
+  .card .rows { color: var(--muted); font-variant-numeric: tabular-nums; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+
+  textarea.sql { width: 100%; min-height: 150px; resize: vertical; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+  .hint { color: var(--muted); margin: 8px 0 14px; }
+  .loading { color: var(--muted); padding: 24px 0; }
+
+  @media (max-width: 760px) {
+    .body { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; inset: 52px auto 0 0; width: 280px; z-index: 5; box-shadow: var(--shadow); transform: translateX(-100%); transition: transform .2s; }
+    .sidebar.open { transform: none; }
+    .menu-btn { display: inline-block; }
+    .topbar .server, .topbar .who { display: none; }
+    main { padding: 12px 16px 24px; }
+    .login-body { padding: 26px 20px 20px; }
+    .login-head h1 { font-size: 28px; }
+    .toolbar input[type=search] { width: 100%; }
+    .grid-wrap { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sign in -->
+<div class="login-wrap" id="login" hidden>
+  <form class="login" id="login-form" novalidate>
+    <div class="login-head">
+      <h1>Shop DB Admin <span class="badge">read-only</span></h1>
+      <p>Shopping App Database Administration</p>
+    </div>
+    <div class="login-body">
+      <div class="note">
+        <strong>Who can sign in</strong>
+        The database admin set on the server (<code>DB_ADMIN_USER</code> and <code>DB_ADMIN_PASSWORD</code>).
+      </div>
+      <div class="error" id="login-error" role="alert" hidden></div>
+      <div class="field">
+        <label for="server">Server choice</label>
+        <select id="server" disabled><option>PostgreSQL - shopping app</option></select>
+      </div>
+      <div class="field">
+        <label for="identity">Username</label>
+        <input id="identity" name="username" value="root" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="primary" id="login-btn" type="submit">Log in <span aria-hidden="true">→</span></button>
+      <div class="login-foot">
+        <span>Data is shown read-only; secrets are hidden.</span>
+        <span>Database: PostgreSQL</span>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Browser -->
+<div class="app" id="app" hidden>
+  <header class="topbar">
+    <button class="ghost menu-btn" id="menu-btn" type="button" aria-label="Show tables">☰</button>
+    <a class="brand" href="?route=/" data-nav>Shop DB Admin <span class="badge">read-only</span></a>
+    <span class="server">Server: PostgreSQL</span>
+    <span class="spacer"></span>
+    <span class="who" id="who"></span>
+    <button class="ghost" id="logout" type="button">Log out</button>
+  </header>
+  <div class="body">
+    <nav class="sidebar" id="sidebar" aria-label="Tables">
+      <div class="db">🗄 Tables <span class="tag" id="table-count"></span></div>
+      <input type="search" id="table-filter" placeholder="Filter tables…" aria-label="Filter tables">
+      <ul class="tables" id="tables"></ul>
+    </nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const TOKEN_KEY = 'shop-db-admin.token';
+  const USER_KEY = 'shop-db-admin.user';
+  const API = '/api/v1';
+
+  // ---------- storage (may be unavailable in private windows) ----------
+  const store = {
+    get(key) { try { return sessionStorage.getItem(key); } catch { return null; } },
+    set(key, value) { try { sessionStorage.setItem(key, value); } catch { /* keep in memory only */ } },
+    remove(key) { try { sessionStorage.removeItem(key); } catch { /* ignore */ } },
+  };
+  let token = store.get(TOKEN_KEY);
+  let user = null;
+  try { user = JSON.parse(store.get(USER_KEY) || 'null'); } catch { user = null; }
+  let tables = [];
+
+  // ---------- DOM helpers (values are always set as text, never as HTML) ----------
+  const $ = (id) => document.getElementById(id);
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs || {})) {
+      if (value === undefined || value === null || value === false) continue;
+      if (key === 'class') node.className = value;
+      else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
+      else node.setAttribute(key, value === true ? '' : value);
+    }
+    for (const child of children.flat()) {
+      if (child === null || child === undefined || child === false) continue;
+      node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+    }
+    return node;
+  }
+  const fmt = (n) => Number(n).toLocaleString();
+
+  // ---------- routing: ?route=/table/browse&table=users ----------
+  function params() { return new URLSearchParams(location.search); }
+  function href(next) {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(next)) if (v !== undefined && v !== null && v !== '') p.set(k, v);
+    return '?' + p.toString();
+  }
+  function go(next, replace) {
+    const url = href(next);
+    if (replace) history.replaceState(null, '', url); else history.pushState(null, '', url);
+    render();
+  }
+  window.addEventListener('popstate', render);
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[data-nav]');
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    history.pushState(null, '', link.getAttribute('href'));
+    $('sidebar').classList.remove('open');
+    render();
+  });
+
+  // ---------- API ----------
+  class SignedOut extends Error {}
+  async function api(path, options = {}) {
+    const response = await fetch(API + path, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+    });
+    let body = null;
+    try { body = await response.json(); } catch { body = null; }
+    if (response.status === 401 && path !== '/admin/db/login') {
+      signOut('Your session has ended. Please log in again.');
+      throw new SignedOut();
+    }
+    if (!response.ok) throw new Error((body && body.error) || `Request failed (${response.status}).`);
+    return body;
+  }
+
+  // ---------- sign in / out ----------
+  function showLogin(message) {
+    $('app').hidden = true;
+    $('login').hidden = false;
+    const box = $('login-error');
+    box.textContent = message || '';
+    box.hidden = !message;
+    setTimeout(() => $('password').focus(), 0);
+  }
+  function signOut(message) {
+    token = null; user = null;
+    store.remove(TOKEN_KEY); store.remove(USER_KEY);
+    showLogin(message);
+  }
+  $('logout').addEventListener('click', () => signOut());
+
+  $('login-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const identity = $('identity').value.trim();
+    const password = $('password').value;
+    if (!identity || !password) { showLogin('Enter the username and password.'); return; }
+
+    const button = $('login-btn');
+    button.disabled = true;
+    try {
+      const session = await api('/admin/db/login', { method: 'POST', body: JSON.stringify({ username: identity, password }) });
+      token = session.token; user = session.user;
+      store.set(TOKEN_KEY, token); store.set(USER_KEY, JSON.stringify(user));
+      $('password').value = '';
+      await start();
+    } catch (error) {
+      showLogin(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  // ---------- app ----------
+  async function start() {
+    $('login').hidden = true;
+    $('app').hidden = false;
+    $('who').textContent = user && user.username ? 'User: ' + user.username : 'Signed in';
+    await loadTables();
+    render();
+  }
+
+  async function loadTables() {
+    try {
+      const data = await api('/admin/db/tables');
+      tables = data.tables;
+    } catch (error) {
+      if (error instanceof SignedOut) throw error;
+      if (/does not have access/i.test(error.message)) { signOut('This login does not have access.'); throw new SignedOut(); }
+      tables = [];
+      $('main').replaceChildren(el('div', { class: 'error' }, error.message));
+    }
+    renderSidebar();
+  }
+
+  function renderSidebar() {
+    const filter = $('table-filter').value.trim().toLowerCase();
+    const current = params().get('table');
+    $('table-count').textContent = String(tables.length);
+    $('tables').replaceChildren(...tables
+      .filter((t) => !filter || t.name.toLowerCase().includes(filter))
+      .map((t) => el('li', {}, el('a', {
+        href: href({ route: '/table/browse', table: t.name }), 'data-nav': true,
+        class: t.name === current ? 'active' : '',
+      }, el('span', {}, t.name), el('span', { class: 'count' }, fmt(t.rows))))));
+  }
+  $('table-filter').addEventListener('input', renderSidebar);
+  $('menu-btn').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+
+  function crumbs(...parts) {
+    const items = [el('a', { href: href({ route: '/' }), 'data-nav': true }, 'Server: PostgreSQL'), ' › ',
+      el('a', { href: href({ route: '/' }), 'data-nav': true }, 'Database: public')];
+    for (const part of parts) if (part) items.push(' › ', part);
+    return el('div', { class: 'crumbs' }, items);
+  }
+
+  function tabs(table, active) {
+    const list = table
+      ? [['Browse', '/table/browse'], ['Structure', '/table/structure'], ['SQL', '/sql']]
+      : [['Tables', '/'], ['SQL', '/sql']];
+    return el('div', { class: 'tabs', role: 'tablist' }, list.map(([label, route]) =>
+      el('a', { href: href({ route, table }), 'data-nav': true, class: route === active ? 'active' : '', role: 'tab' }, label)));
+  }
+
+  let renderToken = 0;
+  async function render() {
+    if (!token) return;
+    renderSidebar();
+    const p = params();
+    const route = p.get('route') || '/';
+    const table = p.get('table') || '';
+    const id = ++renderToken;
+    const main = $('main');
+    const stale = () => id !== renderToken;
+
+    try {
+      if (route === '/table/browse' && table) await renderBrowse(main, table, p, stale);
+      else if (route === '/table/structure' && table) await renderStructure(main, table, stale);
+      else if (route === '/sql') renderSQL(main, table);
+      else renderHome(main);
+      document.title = (table ? table + ' · ' : '') + 'Shop DB Admin';
+    } catch (error) {
+      if (error instanceof SignedOut || stale()) return;
+      main.replaceChildren(crumbs(table ? 'Table: ' + table : 'Error'), el('div', { class: 'error' }, error.message));
+    }
+  }
+
+  function renderHome(main) {
+    const total = tables.reduce((sum, t) => sum + Number(t.rows), 0);
+    main.replaceChildren(
+      crumbs(),
+      tabs('', '/'),
+      el('h2', {}, `${tables.length} tables · ${fmt(total)} rows`),
+      tables.length
+        ? el('div', { class: 'cards' }, tables.map((t) => el('a', { class: 'card', href: href({ route: '/table/browse', table: t.name }), 'data-nav': true },
+            el('div', { class: 'name' }, t.name), el('div', { class: 'rows' }, fmt(t.rows) + (Number(t.rows) === 1 ? ' row' : ' rows')))))
+        : el('div', { class: 'panel empty' }, 'No tables yet. Start the backend with a database and it creates them.'),
+    );
+  }
+
+  const NUMERIC = /^(smallint|integer|bigint|numeric|real|double precision|decimal)/;
+
+  function cell(value, column) {
+    if (value === null) return el('td', {}, el('span', { class: 'null' }, 'NULL'));
+    if (column && column.masked) return el('td', {}, el('span', { class: 'masked', title: 'Hidden' }, value));
+    const isNum = column && NUMERIC.test(column.type);
+    return el('td', { class: isNum ? 'num' : '', title: value.length > 40 ? value : null }, value);
+  }
+
+  async function renderBrowse(main, table, p, stale) {
+    const page = Math.max(1, parseInt(p.get('page') || '1', 10) || 1);
+    const perPage = [10, 25, 50, 100, 200].includes(Number(p.get('perPage'))) ? Number(p.get('perPage')) : 25;
+    const sort = p.get('sort') || '';
+    const dir = p.get('dir') === 'desc' ? 'desc' : 'asc';
+    const search = p.get('search') || '';
+
+    if (!main.querySelector('.grid-wrap')) main.replaceChildren(crumbs('Table: ' + table), tabs(table, '/table/browse'), el('div', { class: 'loading' }, 'Loading…'));
+
+    const q = new URLSearchParams({ page, perPage, dir });
+    if (sort) q.set('sort', sort);
+    if (search) q.set('search', search);
+    const data = await api(`/admin/db/tables/${encodeURIComponent(table)}?${q}`);
+    if (stale()) return;
+
+    const state = { route: '/table/browse', table, page, perPage, sort: data.sort, dir, search };
+    const pages = Math.max(1, Math.ceil(data.total / data.perPage));
+    const first = data.total ? (data.page - 1) * data.perPage + 1 : 0;
+    const last = Math.min(data.total, data.page * data.perPage);
+
+    const searchBox = el('input', { type: 'search', value: search, placeholder: 'Search all columns…', 'aria-label': 'Search rows' });
+    let timer;
+    searchBox.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => go({ ...state, search: searchBox.value.trim(), page: 1 }, true), 350);
+    });
+
+    const perPageSelect = el('select', { 'aria-label': 'Rows per page', onchange: (e) => go({ ...state, perPage: e.target.value, page: 1 }) },
+      [10, 25, 50, 100, 200].map((n) => el('option', { value: n, selected: n === perPage }, n + ' rows')));
+
+    const head = el('tr', {}, data.columns.map((c) => {
+      const active = c.name === data.sort;
+      const nextDir = active && dir === 'asc' ? 'desc' : 'asc';
+      return el('th', { 'aria-sort': active ? (dir === 'asc' ? 'ascending' : 'descending') : null },
+        el('button', { type: 'button', title: c.type, onclick: () => go({ ...state, sort: c.name, dir: nextDir, page: 1 }) },
+          c.name, c.primaryKey ? el('span', { class: 'pk' }, 'PK') : null,
+          active ? el('span', { class: 'arrow' }, dir === 'asc' ? '▲' : '▼') : null));
+    }));
+
+    const body = data.rows.length
+      ? data.rows.map((row) => el('tr', {}, row.map((v, i) => cell(v, data.columns[i]))))
+      : [el('tr', {}, el('td', { class: 'empty', colspan: data.columns.length }, search ? 'No rows match your search.' : 'This table is empty.'))];
+
+    main.replaceChildren(
+      crumbs(el('a', { href: href({ route: '/table/browse', table }), 'data-nav': true }, 'Table: ' + table)),
+      tabs(table, '/table/browse'),
+      el('div', { class: 'toolbar' },
+        searchBox,
+        perPageSelect,
+        el('span', { class: 'grow' }),
+        el('span', { class: 'info' }, data.total ? `Showing rows ${fmt(first)}–${fmt(last)} of ${fmt(data.total)}` : '0 rows'),
+        el('button', { class: 'btn', type: 'button', disabled: data.page <= 1, onclick: () => go({ ...state, page: data.page - 1 }) }, '‹ Prev'),
+        el('span', { class: 'info' }, `Page ${fmt(data.page)} of ${fmt(pages)}`),
+        el('button', { class: 'btn', type: 'button', disabled: data.page >= pages, onclick: () => go({ ...state, page: data.page + 1 }) }, 'Next ›'),
+      ),
+      el('div', { class: 'grid-wrap' }, el('table', { class: 'grid' }, el('thead', {}, head), el('tbody', {}, body))),
+    );
+    if (search) { searchBox.focus(); searchBox.setSelectionRange(search.length, search.length); }
+  }
+
+  async function renderStructure(main, table, stale) {
+    main.replaceChildren(crumbs('Table: ' + table), tabs(table, '/table/structure'), el('div', { class: 'loading' }, 'Loading…'));
+    const data = await api(`/admin/db/tables/${encodeURIComponent(table)}/columns`);
+    if (stale()) return;
+
+    main.replaceChildren(
+      crumbs(el('a', { href: href({ route: '/table/browse', table }), 'data-nav': true }, 'Table: ' + table), 'Structure'),
+      tabs(table, '/table/structure'),
+      el('div', { class: 'grid-wrap' }, el('table', { class: 'grid' },
+        el('thead', {}, el('tr', {}, ['#', 'Name', 'Type', 'Null', 'Default', 'Key', 'Notes'].map((h) => el('th', {}, h)))),
+        el('tbody', {}, data.columns.map((c, i) => el('tr', {},
+          el('td', { class: 'num' }, i + 1),
+          el('td', {}, el('strong', {}, c.name)),
+          el('td', { class: 'mono' }, c.type),
+          el('td', {}, c.nullable ? 'Yes' : 'No'),
+          c.default === null ? el('td', {}, el('span', { class: 'null' }, 'None')) : el('td', { class: 'mono', title: c.default }, c.default),
+          el('td', {}, c.primaryKey ? el('span', { class: 'pk' }, 'PRIMARY') : ''),
+          el('td', {}, c.masked ? el('span', { class: 'tag' }, 'hidden on this page') : ''),
+        ))),
+      )),
+    );
+  }
+
+  let lastSQL = '';
+  function renderSQL(main, table) {
+    const editor = el('textarea', { class: 'sql mono', spellcheck: 'false', 'aria-label': 'SQL query' });
+    editor.value = lastSQL || (table ? `SELECT * FROM "${table.replace(/"/g, '""')}" LIMIT 50;` : 'SELECT * FROM users ORDER BY id DESC LIMIT 50;');
+    const output = el('div');
+    const run = el('button', { class: 'btn blue', type: 'button' }, 'Run query');
+
+    async function execute() {
+      lastSQL = editor.value;
+      run.disabled = true;
+      output.replaceChildren(el('div', { class: 'loading' }, 'Running…'));
+      try {
+        const data = await api('/admin/db/query', { method: 'POST', body: JSON.stringify({ sql: editor.value }) });
+        const meta = `${fmt(data.rows.length)} row${data.rows.length === 1 ? '' : 's'}${data.truncated ? ' (first 500 shown)' : ''} · ${data.elapsedMs} ms`;
+        output.replaceChildren(
+          el('div', { class: 'toolbar' }, el('span', { class: 'info' }, meta)),
+          data.columns.length
+            ? el('div', { class: 'grid-wrap' }, el('table', { class: 'grid' },
+                el('thead', {}, el('tr', {}, data.columns.map((c) => el('th', {}, c)))),
+                el('tbody', {}, data.rows.length
+                  ? data.rows.map((row) => el('tr', {}, row.map((v) => cell(v, null))))
+                  : el('tr', {}, el('td', { class: 'empty', colspan: data.columns.length }, 'No rows.')))))
+            : el('div', { class: 'panel empty' }, data.command || 'Done.'),
+        );
+      } catch (error) {
+        if (!(error instanceof SignedOut)) output.replaceChildren(el('div', { class: 'error' }, error.message));
+      } finally {
+        run.disabled = false;
+      }
+    }
+    run.addEventListener('click', execute);
+    editor.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); execute(); } });
+
+    main.replaceChildren(
+      crumbs(table ? el('a', { href: href({ route: '/table/browse', table }), 'data-nav': true }, 'Table: ' + table) : null, 'SQL'),
+      tabs(table, '/sql'),
+      editor,
+      el('p', { class: 'hint' }, 'Read-only: one statement at a time, stopped after 5 seconds, first 500 rows shown. Ctrl+Enter runs it.'),
+      el('div', { class: 'toolbar' }, run),
+      output,
+    );
+    editor.focus();
+  }
+
+  // ---------- boot ----------
+  if (token) start().catch(() => {});
+  else showLogin();
+})();
+</script>
+</body>
+</html>

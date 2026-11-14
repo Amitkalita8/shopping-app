@@ -15,6 +15,7 @@ import (
 	"shopping-app/backend/internal/auth"
 	"shopping-app/backend/internal/cart"
 	"shopping-app/backend/internal/config"
+	"shopping-app/backend/internal/dbadmin"
 	"shopping-app/backend/internal/health"
 	"shopping-app/backend/internal/orders"
 	"shopping-app/backend/internal/storefront"
@@ -38,6 +39,7 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 	var wishlistStore *wishlist.Store
 	var addressStore *address.Store
 	var ordersStore *orders.Store
+	var dbAdminStore *dbadmin.Store
 	if cfg.DatabaseURL != "" {
 		store, err := admin.NewStore(context.Background(), cfg.DatabaseURL)
 		if err != nil {
@@ -87,6 +89,13 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 		} else {
 			ordersStore = checkout
 		}
+
+		browser, err := dbadmin.NewStore(context.Background(), cfg.DatabaseURL)
+		if err != nil {
+			logger.Error("failed to initialize db admin store", "error", err.Error())
+		} else {
+			dbAdminStore = browser
+		}
 	}
 
 	authSecret := cfg.AuthSecret
@@ -107,6 +116,12 @@ func NewRouter(logger *slog.Logger, cfg config.Config) http.Handler {
 	wishlist.NewHandler(logger, wishlistStore, authHandler).Routes(mux)
 	address.NewHandler(logger, addressStore, authHandler).Routes(mux)
 	orders.NewHandler(logger, ordersStore, authHandler, cfg.RazorpayKeyID, cfg.RazorpayKeySecret).Routes(mux)
+	// Read-only database browser for admins at /db-admin.
+	dbadmin.NewHandler(logger, dbAdminStore, authHandler,
+		dbadmin.Credentials{User: cfg.DBAdminUser, Password: cfg.DBAdminPassword}, authSecret).Routes(mux)
+	if cfg.DBAdminPassword == "" {
+		logger.Warn("DB_ADMIN_PASSWORD is not set; the /db-admin username login is off (shop admins can still use it)")
+	}
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

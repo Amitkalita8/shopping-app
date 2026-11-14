@@ -1,0 +1,685 @@
+/* Database browser at /db-admin. Everything is scoped to .dbadmin so the shop's styles are untouched. */
+.dbadmin {
+  --dba-bg: #f1f3f6;
+  --dba-surface: #ffffff;
+  --dba-surface-2: #f8fafc;
+  --dba-border: #dfe3ea;
+  --dba-text: #1f2937;
+  --dba-muted: #6b7280;
+  --dba-head: #1e293b;
+  --dba-head-text: #f8fafc;
+  --dba-head-muted: #cbd5e1;
+  --dba-accent: #2563eb;
+  --dba-accent-hover: #1d4ed8;
+  --dba-accent-soft: #eef4ff;
+  --dba-accent-line: #bcd0fb;
+  --dba-badge: #f97316;
+  --dba-row-hover: #f3f7ff;
+  --dba-danger: #b91c1c;
+  --dba-danger-soft: #fef2f2;
+  --dba-null: #9ca3af;
+  --dba-pk: #b45309;
+  --dba-pk-soft: #fef3c7;
+  --dba-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.08);
+
+  min-height: 100vh;
+  background: var(--dba-bg);
+  color: var(--dba-text);
+  font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  text-align: left;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dbadmin {
+    --dba-bg: #0f141b;
+    --dba-surface: #161c25;
+    --dba-surface-2: #1b2330;
+    --dba-border: #2a3444;
+    --dba-text: #e5e7eb;
+    --dba-muted: #94a3b8;
+    --dba-head: #0b1018;
+    --dba-head-muted: #94a3b8;
+    --dba-accent: #3b82f6;
+    --dba-accent-hover: #60a5fa;
+    --dba-accent-soft: #172338;
+    --dba-accent-line: #29446f;
+    --dba-row-hover: #1a2536;
+    --dba-danger: #f87171;
+    --dba-danger-soft: #2a1515;
+    --dba-null: #64748b;
+    --dba-pk: #fbbf24;
+    --dba-pk-soft: #3a2e10;
+    --dba-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+.dbadmin *,
+.dbadmin *::before,
+.dbadmin *::after {
+  box-sizing: border-box;
+}
+
+.dbadmin button,
+.dbadmin input,
+.dbadmin select,
+.dbadmin textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.dbadmin code,
+.dbadmin .dba-mono {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 13px;
+}
+
+/* ---------- Sign in ---------- */
+.dba-login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 16px;
+}
+
+.dba-login {
+  width: 100%;
+  max-width: 600px;
+  background: var(--dba-surface);
+  border-radius: 6px;
+  box-shadow: var(--dba-shadow);
+  overflow: hidden;
+}
+
+.dba-login-head {
+  background: var(--dba-head);
+  color: var(--dba-head-text);
+  text-align: center;
+  padding: 36px 24px 30px;
+}
+
+.dba-login-head h1 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dba-badge {
+  background: var(--dba-badge);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+  letter-spacing: 0;
+}
+
+.dba-login-head p {
+  margin: 10px 0 0;
+  color: var(--dba-head-muted);
+  font-size: 16px;
+}
+
+.dba-login-body {
+  padding: 34px 36px 26px;
+}
+
+.dba-note {
+  border: 1px dashed var(--dba-accent-line);
+  background: var(--dba-accent-soft);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin-bottom: 26px;
+  color: var(--dba-accent);
+}
+
+.dba-note strong {
+  display: block;
+}
+
+.dba-field {
+  margin-bottom: 20px;
+}
+
+.dba-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.dba-field input,
+.dba-field select {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  background: var(--dba-surface);
+  font-size: 16px;
+}
+
+.dba-field select:disabled {
+  opacity: 1;
+  background: var(--dba-surface-2);
+}
+
+.dbadmin input:focus,
+.dbadmin select:focus,
+.dbadmin textarea:focus {
+  outline: 2px solid var(--dba-accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.dba-primary {
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--dba-accent);
+  color: #fff !important;
+  font-size: 17px !important;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.dba-primary:hover {
+  background: var(--dba-accent-hover);
+}
+
+.dba-primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.dba-error {
+  background: var(--dba-danger-soft);
+  color: var(--dba-danger);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.dba-login-foot {
+  border-top: 1px solid var(--dba-border);
+  margin-top: 28px;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--dba-muted);
+  flex-wrap: wrap;
+}
+
+/* ---------- App shell ---------- */
+.dba-app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+
+.dba-topbar {
+  background: var(--dba-head);
+  color: var(--dba-head-text);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  height: 52px;
+}
+
+.dba-brand {
+  font-weight: 700;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.dba-brand .dba-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.dba-server,
+.dba-who {
+  color: var(--dba-head-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dba-who {
+  max-width: 260px;
+}
+
+.dba-spacer {
+  flex: 1;
+}
+
+.dba-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--dba-head-text) !important;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dba-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dba-menu-btn {
+  display: none;
+}
+
+.dba-body {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 0;
+}
+
+.dba-sidebar {
+  background: var(--dba-surface);
+  border-right: 1px solid var(--dba-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dba-db {
+  padding: 14px 16px 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dba-sidebar input {
+  margin: 0 12px 8px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  background: var(--dba-surface);
+}
+
+.dba-tables {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 12px;
+  overflow: auto;
+}
+
+.dba-tables a {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  color: var(--dba-text);
+  text-decoration: none;
+}
+
+.dba-tables a:hover {
+  background: var(--dba-row-hover);
+}
+
+.dba-tables a.active {
+  background: var(--dba-accent-soft);
+  color: var(--dba-accent);
+  font-weight: 600;
+}
+
+.dba-count {
+  color: var(--dba-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+.dba-main {
+  overflow: auto;
+  padding: 16px 20px 32px;
+  min-width: 0;
+}
+
+.dba-crumbs {
+  color: var(--dba-muted);
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.dba-crumbs a {
+  color: var(--dba-accent);
+  text-decoration: none;
+}
+
+.dba-crumbs a:hover {
+  text-decoration: underline;
+}
+
+.dba-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--dba-border);
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.dba-tabs a {
+  padding: 9px 16px;
+  text-decoration: none;
+  color: var(--dba-muted);
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  white-space: nowrap;
+}
+
+.dba-tabs a:hover {
+  color: var(--dba-text);
+}
+
+.dba-tabs a.active {
+  color: var(--dba-text);
+  background: var(--dba-surface);
+  border-color: var(--dba-border);
+  margin-bottom: -1px;
+  font-weight: 600;
+}
+
+.dba-panel {
+  background: var(--dba-surface);
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+}
+
+.dba-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dba-toolbar input[type='search'] {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  background: var(--dba-surface);
+  width: 280px;
+  max-width: 100%;
+}
+
+.dba-toolbar select {
+  height: 34px;
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  background: var(--dba-surface);
+  padding: 0 8px;
+}
+
+.dba-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--dba-border);
+  background: var(--dba-surface);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dba-btn:hover:not(:disabled) {
+  border-color: var(--dba-accent);
+  color: var(--dba-accent);
+}
+
+.dba-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.dba-btn.dba-blue {
+  background: var(--dba-accent);
+  border-color: var(--dba-accent);
+  color: #fff;
+}
+
+.dba-btn.dba-blue:hover:not(:disabled) {
+  background: var(--dba-accent-hover);
+  color: #fff;
+}
+
+.dba-info {
+  color: var(--dba-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dba-grow {
+  flex: 1;
+}
+
+.dba-grid-wrap {
+  overflow: auto;
+  max-height: calc(100vh - 250px);
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  background: var(--dba-surface);
+}
+
+.dba-grid {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.dba-grid th,
+.dba-grid td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--dba-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dba-grid th {
+  position: sticky;
+  top: 0;
+  background: var(--dba-surface-2);
+  z-index: 1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dba-grid th button {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dba-grid th button:hover {
+  color: var(--dba-accent);
+}
+
+.dba-grid td {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dba-grid tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--dba-surface-2) 60%, transparent);
+}
+
+.dba-grid tbody tr:hover td {
+  background: var(--dba-row-hover);
+}
+
+.dba-grid td.dba-num {
+  text-align: right;
+}
+
+.dba-arrow {
+  color: var(--dba-accent);
+  font-size: 11px;
+}
+
+.dba-null {
+  color: var(--dba-null);
+  font-style: italic;
+}
+
+.dba-masked {
+  color: var(--dba-muted);
+  letter-spacing: 2px;
+}
+
+.dba-pk {
+  background: var(--dba-pk-soft);
+  color: var(--dba-pk);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.dba-tag {
+  background: var(--dba-surface-2);
+  border: 1px solid var(--dba-border);
+  color: var(--dba-muted);
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 0 6px;
+  font-weight: 400;
+}
+
+.dba-empty {
+  padding: 32px;
+  text-align: center !important;
+  color: var(--dba-muted);
+}
+
+.dba-h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.dba-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.dba-card {
+  background: var(--dba-surface);
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: var(--dba-text);
+  display: block;
+}
+
+.dba-card:hover {
+  border-color: var(--dba-accent);
+}
+
+.dba-card-name {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.dba-card-rows {
+  color: var(--dba-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dba-sql {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--dba-border);
+  border-radius: 6px;
+  background: var(--dba-surface);
+}
+
+.dba-hint {
+  color: var(--dba-muted);
+  margin: 8px 0 14px;
+}
+
+.dba-loading {
+  color: var(--dba-muted);
+  padding: 24px 0;
+}
+
+@media (max-width: 760px) {
+  .dba-body {
+    grid-template-columns: 1fr;
+  }
+
+  .dba-sidebar {
+    position: fixed;
+    top: 52px;
+    bottom: 0;
+    left: 0;
+    width: 280px;
+    z-index: 5;
+    box-shadow: var(--dba-shadow);
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+  }
+
+  .dba-sidebar.open {
+    transform: none;
+  }
+
+  .dba-menu-btn {
+    display: inline-block;
+  }
+
+  .dba-server,
+  .dba-who {
+    display: none;
+  }
+
+  .dba-main {
+    padding: 12px 16px 24px;
+  }
+
+  .dba-login-body {
+    padding: 26px 20px 20px;
+  }
+
+  .dba-login-head h1 {
+    font-size: 28px;
+  }
+
+  .dba-toolbar input[type='search'] {
+    width: 100%;
+  }
+
+  .dba-grid-wrap {
+    max-height: none;
+  }
+}

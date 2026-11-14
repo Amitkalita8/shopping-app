@@ -16,6 +16,9 @@ type Config struct {
 	GoogleClientID    string
 	RazorpayKeyID     string
 	RazorpayKeySecret string
+	// Login for the database browser at /db-admin. Without a password that login is turned off.
+	DBAdminUser     string
+	DBAdminPassword string
 }
 
 // loadDotEnv reads KEY=VALUE lines from path into the process environment.
@@ -61,6 +64,11 @@ func Load() Config {
 		frontendOrigin = defaultFrontendOrigin
 	}
 
+	dbAdminUser := strings.TrimSpace(os.Getenv("DB_ADMIN_USER"))
+	if dbAdminUser == "" {
+		dbAdminUser = "root"
+	}
+
 	return Config{
 		Port:              port,
 		DatabaseURL:       databaseURL,
@@ -69,5 +77,8 @@ func Load() Config {
 		GoogleClientID:    strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
 		RazorpayKeyID:     strings.TrimSpace(os.Getenv("RAZORPAY_KEY_ID")),
 		RazorpayKeySecret: strings.TrimSpace(os.Getenv("RAZORPAY_KEY_SECRET")),
+		DBAdminUser:       dbAdminUser,
+		// Not trimmed: spaces may be part of the password.
+		DBAdminPassword: os.Getenv("DB_ADMIN_PASSWORD"),
 	}
 }

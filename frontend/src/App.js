@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import AdminApp from './View/Admin/AdminApp';
+import DbAdminApp from './View/DbAdmin/DbAdminApp';
+import { getCurrentPath as getAppPath } from './View/User/utils';
 import StorefrontApp from './View/User/StorefrontApp';
 
 function getCurrentPath() {
@@ -44,6 +46,12 @@ function AppRouter() {
       setCurrentPath(path);
     }
   };
+
+  // The site may live under a prefix (GitHub Pages: /shopping-app), so compare without it.
+  const appPath = getAppPath();
+  if (appPath === '/db-admin' || appPath.startsWith('/db-admin/')) {
+    return <DbAdminApp />;
+  }
 
   if (currentPath.startsWith('/admin')) {
     return <AdminApp onNavigate={navigate} />;

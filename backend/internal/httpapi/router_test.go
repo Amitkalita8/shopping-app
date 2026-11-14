@@ -190,3 +190,32 @@ func TestCheckoutAndAddressRequireASession(t *testing.T) {
 		}
 	}
 }
+
+func TestDBAdminPageIsServedAndItsDataNeedsAnAdmin(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	router := NewRouter(logger, config.Config{FrontendOrigin: "http://localhost:3000", AuthSecret: "test-secret"})
+
+	req := httptest.NewRequest(http.MethodGet, "/db-admin", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Header().Get("Content-Type"), "text/html") {
+		t.Fatalf("GET /db-admin: status %d, content type %q", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	if rec.Header().Get("X-Frame-Options") != "DENY" {
+		t.Error("the admin page must not be embeddable in other sites")
+	}
+
+	for _, tc := range []struct{ method, path string }{
+		{http.MethodGet, "/api/v1/admin/db/tables"},
+		{http.MethodGet, "/api/v1/admin/db/tables/users"},
+		{http.MethodGet, "/api/v1/admin/db/tables/users/columns"},
+		{http.MethodPost, "/api/v1/admin/db/query"},
+	} {
+		req := httptest.NewRequest(tc.method, tc.path, strings.NewReader(`{"sql":"SELECT 1"}`))
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("%s %s without a login: status %d, want %d", tc.method, tc.path, rec.Code, http.StatusUnauthorized)
+		}
+	}
+}
