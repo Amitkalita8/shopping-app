@@ -11,9 +11,9 @@
 # A free Render database expires 30 days after it is created; upgrade its plan (basic-256mb)
 # before then to keep the data.
 #
-# The website addresses below assume Render kept these service names as the
-# onrender.com subdomains. If Render added a suffix (name already taken), update
-# REACT_APP_API_BASE_URL and FRONTEND_ORIGIN to the real addresses.
+# Render added a suffix to names that were already taken, so the live addresses are
+#   API https://shopping-app-api-it8x.onrender.com, website https://shopping-app-web-1931.onrender.com.
+# If a service is ever recreated with a new address, update REACT_APP_API_BASE_URL and FRONTEND_ORIGIN.
 
 databases:
   - name: shopping-app-db
@@ -47,7 +47,7 @@ services:
         value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
       # Websites allowed to call this API, comma separated, no trailing path.
       - key: FRONTEND_ORIGIN
-        value: https://shopping-app-web.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+        value: https://shopping-app-web-1931.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
       # Login for the database browser at /db-admin. Render asks for the password; it is never committed.
       - key: DB_ADMIN_USER
         value: root
@@ -91,7 +91,7 @@ services:
         value: "20"
       # Read at build time; changing it needs a redeploy of the site.
       - key: REACT_APP_API_BASE_URL
-        value: https://shopping-app-api.onrender.com
+        value: https://shopping-app-api-it8x.onrender.com
       - key: REACT_APP_GOOGLE_CLIENT_ID
         value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
     routes:

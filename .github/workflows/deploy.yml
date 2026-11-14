@@ -39,7 +39,7 @@ jobs:
         env:
           # Repository variables (Settings > Secrets and variables > Actions > Variables)
           # override these; otherwise the Render APIs from render.yaml are used.
-          API_BASE_URL_PROD: ${{ vars.API_BASE_URL || 'https://shopping-app-api.onrender.com' }}
+          API_BASE_URL_PROD: ${{ vars.API_BASE_URL || 'https://shopping-app-api-it8x.onrender.com' }}
           API_BASE_URL_DEV: ${{ vars.API_BASE_URL_DEV || 'https://shopping-app-api-dev.onrender.com' }}
           REACT_APP_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID || '1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com' }}
         run: |
