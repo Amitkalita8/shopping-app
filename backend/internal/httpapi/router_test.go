@@ -219,3 +219,32 @@ func TestDBAdminPageIsServedAndItsDataNeedsAnAdmin(t *testing.T) {
 		}
 	}
 }
+
+func TestCORSAllowsAnyLocalPortOnlyWhenLocalhostIsConfigured(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	check := func(configured, origin string) string {
+		router := NewRouter(logger, config.Config{FrontendOrigin: configured})
+		req := httptest.NewRequest(http.MethodGet, "/health", nil)
+		req.Header.Set("Origin", origin)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		return rec.Header().Get("Access-Control-Allow-Origin")
+	}
+
+	local := "http://localhost:3000,https://shop.example.com"
+	for origin, want := range map[string]string{
+		"http://localhost:3001":     "http://localhost:3001",
+		"http://127.0.0.1:3002":     "http://127.0.0.1:3002",
+		"https://shop.example.com":  "https://shop.example.com",
+		"http://localhost.evil.com": "",
+		"https://evil.example.com":  "",
+	} {
+		if got := check(local, origin); got != want {
+			t.Errorf("configured %q, Origin %q: got %q, want %q", local, origin, got, want)
+		}
+	}
+
+	if got := check("https://shop.example.com", "http://localhost:3001"); got != "" {
+		t.Errorf("a hosted-only config must not allow localhost, got %q", got)
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -209,17 +210,33 @@ func loggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 
 // corsMiddleware lets the configured frontends call the API. allowedOrigins is one address or a
 // comma-separated list, and only the page's own address is echoed back, as browsers require.
+// isLocalOrigin reports whether origin is a page on this computer, such as http://localhost:3001.
+func isLocalOrigin(origin string) bool {
+	u, err := url.Parse(origin)
+	if err != nil || u.Scheme != "http" || u.Path != "" {
+		return false
+	}
+	host := u.Hostname()
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
+}
+
 func corsMiddleware(allowedOrigins string, next http.Handler) http.Handler {
 	allowed := map[string]bool{}
+	anyLocalPort := false
 	for _, origin := range strings.Split(allowedOrigins, ",") {
 		if origin = strings.TrimRight(strings.TrimSpace(origin), "/"); origin != "" {
 			allowed[origin] = true
+			// The dev server moves to 3001, 3002, ... when 3000 is busy, so a localhost entry
+			// allows the site on any local port. Hosted origins still have to match exactly.
+			if isLocalOrigin(origin) {
+				anyLocalPort = true
+			}
 		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Origin")
-		if origin := r.Header.Get("Origin"); allowed[origin] {
+		if origin := r.Header.Get("Origin"); allowed[origin] || (anyLocalPort && isLocalOrigin(origin)) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
