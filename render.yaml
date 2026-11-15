@@ -36,7 +36,7 @@ services:
         value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
       # Websites allowed to call this API, comma separated, no trailing path.
       - key: FRONTEND_ORIGIN
-        value: https://shopping-app-web-1931.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+        value: https://atelierpsvogue.com,https://www.atelierpsvogue.com,https://shopping-app-web-1931.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
       # Login for the database browser at /db-admin. Render asks for the password; it is never committed.
       - key: DB_ADMIN_USER
         value: root
@@ -61,7 +61,7 @@ services:
       - key: GOOGLE_CLIENT_ID
         value: 1063209695755-i9upu09e2j1mfg0jj22fpjs3ulesaflo.apps.googleusercontent.com
       - key: FRONTEND_ORIGIN
-        value: https://shopping-app-web-dev.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
+        value: https://dev.atelierpsvogue.com,https://shopping-app-web-dev.onrender.com,https://amitkalita8.github.io,https://shopping-app-bay-five.vercel.app
       - key: DB_ADMIN_USER
         value: root
       - key: DB_ADMIN_PASSWORD
