@@ -1,36 +1,16 @@
+import HeroBanner from '../../components/HeroBanner';
 import ProductCard from '../../components/ProductCard';
 import { useStorefront } from '../../StorefrontData';
 
 function HomePage({ onAddToCart, onNavigate, onOpenProduct, onToggleWishlist, wishlistIds = [] }) {
   const { content, homeSections } = useStorefront();
-  const { hero, spotlightCards } = content;
+  const { hero } = content;
 
   return (
     <main className="site-shell page-content">
-      <section className="hero-layout">
-        <article className="hero-panel">
-          <p className="hero-panel__eyebrow">{hero.eyebrow}</p>
-          <h1>{hero.title}</h1>
-          <p>{hero.copy}</p>
-          <div className="hero-panel__actions">
-            <button onClick={() => onNavigate(hero.primaryPath)} type="button">
-              {hero.primaryLabel}
-            </button>
-            <button className="is-secondary" onClick={() => onNavigate(hero.secondaryPath)} type="button">
-              {hero.secondaryLabel}
-            </button>
-          </div>
-        </article>
-
-        <div className="hero-side-cards">
-          {spotlightCards.map((card) => (
-            <article className="hero-side-card" key={card.id}>
-              <h2>{card.title}</h2>
-              <p>{card.copy}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      {/* The banner is the visible hero; the page title stays for screen readers and search engines. */}
+      <h1 className="sr-only">{hero.title}</h1>
+      <HeroBanner onNavigate={onNavigate} />
 
       {homeSections.map((section) =>
         section.layout === 'strip' ? (

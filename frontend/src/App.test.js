@@ -29,9 +29,7 @@ test('renders whatever the database returns, not built-in text', async () => {
   const bundle = cloneStorefront();
   bundle.settings.storeName = 'Northwind Fashion';
   bundle.content.hero.title = 'A brand new hero headline';
-  bundle.content.hero.primaryLabel = 'Shop the drop';
   bundle.content.navigation[0].label = 'Menswear';
-  bundle.content.spotlightCards[0].title = 'Editors pick';
   bundle.products.find((product) => product.id === 'banarasi-saree').title = 'Renamed Silk Saree';
   bundle.products.find((product) => product.id === 'banarasi-saree').price = 5555;
   mockStorefrontApi(bundle);
@@ -39,10 +37,8 @@ test('renders whatever the database returns, not built-in text', async () => {
   render(<App />);
 
   expect(await screen.findByRole('heading', { name: 'A brand new hero headline', level: 1 })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Shop the drop' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Menswear' })).toBeInTheDocument();
   expect(screen.getByText('Northwind Fashion')).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Editors pick' })).toBeInTheDocument();
   expect(screen.getAllByRole('heading', { name: 'Renamed Silk Saree' }).length).toBeGreaterThan(0);
   expect(screen.getAllByText('Rs 5,555').length).toBeGreaterThan(0);
   expect(screen.queryByText(/banarasi silk saree with blouse piece/i)).not.toBeInTheDocument();
